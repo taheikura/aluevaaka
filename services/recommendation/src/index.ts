@@ -6,11 +6,11 @@
  * the MVP simple while making it trivial to move to API Gateway later —
  * just change the event type and update the route extraction.
  */
-import type { LambdaFunctionURLEvent, Context } from 'aws-lambda';
-import { clearRequestId, logger, setRequestId } from './logger.js';
-import { error, noContent, type HandlerResponse } from './response.js';
+import type { Context, LambdaFunctionURLEvent } from 'aws-lambda';
 import { handleHealth } from './handlers/health.js';
 import { handleRecommendations } from './handlers/recommendations.js';
+import { clearRequestId, logger, setRequestId } from './logger.js';
+import { error, type HandlerResponse, noContent } from './response.js';
 
 export const handler = async (
   event: LambdaFunctionURLEvent,
@@ -20,7 +20,7 @@ export const handler = async (
 
   const method = event.requestContext.http.method.toUpperCase();
   const path = event.rawPath;
-  const origin = event.headers['origin'];
+  const origin = event.headers.origin;
 
   logger.info('request_received', { method, path });
 

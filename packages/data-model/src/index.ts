@@ -1,10 +1,10 @@
 export type {
-  ISODateString,
-  MunicipalityId,
-  MunicipalityCoordinates,
-  MunicipalityBase,
-  MunicipalityMetrics,
   DataCompleteness,
   DataSourceProvenance,
   DatasetManifest,
+  ISODateString,
+  MunicipalityBase,
+  MunicipalityCoordinates,
+  MunicipalityId,
+  MunicipalityMetrics,
 } from './municipality.js';

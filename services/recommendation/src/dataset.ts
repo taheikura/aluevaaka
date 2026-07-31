@@ -1,16 +1,16 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import type { MunicipalityBase, MunicipalityMetrics, DatasetManifest } from '@aluevaaka/data-model';
-import { buildRanges } from '@aluevaaka/scoring';
+import type { DatasetManifest, MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
 import type { NormalizedDataset } from '@aluevaaka/scoring';
+import { buildRanges } from '@aluevaaka/scoring';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { config } from './config.js';
 import { logger } from './logger.js';
 
 const s3 = new S3Client({ region: config.region });
 
 /** Module-level cache — survives warm Lambda invocations */
-let cachedDataset: NormalizedDataset & { manifest: DatasetManifest } | null = null;
+let cachedDataset: (NormalizedDataset & { manifest: DatasetManifest }) | null = null;
 let cachedVersion: string | null = null;
 
 /**
@@ -32,9 +32,7 @@ async function fetchJson<T>(key: string): Promise<T> {
     return JSON.parse(text) as T;
   }
 
-  const response = await s3.send(
-    new GetObjectCommand({ Bucket: config.dataBucket, Key: key }),
-  );
+  const response = await s3.send(new GetObjectCommand({ Bucket: config.dataBucket, Key: key }));
   if (!response.Body) {
     throw new Error(`Empty response body for S3 key: ${key}`);
   }
@@ -48,9 +46,7 @@ async function fetchJson<T>(key: string): Promise<T> {
  * newly deployed dataset will be picked up on the next cold start or after
  * a function update.
  */
-export async function loadDataset(): Promise<
-  NormalizedDataset & { manifest: DatasetManifest }
-> {
+export async function loadDataset(): Promise<NormalizedDataset & { manifest: DatasetManifest }> {
   const manifestKey = `${config.dataPrefix}/dataset-manifest.json`;
 
   // Always fetch the manifest to check if the version changed
@@ -58,7 +54,9 @@ export async function loadDataset(): Promise<
   try {
     manifest = await fetchJson<DatasetManifest>(manifestKey);
   } catch (err) {
-    throw new Error(`Failed to load dataset manifest from s3://${config.dataBucket}/${manifestKey}: ${String(err)}`);
+    throw new Error(
+      `Failed to load dataset manifest from s3://${config.dataBucket}/${manifestKey}: ${String(err)}`,
+    );
   }
 
   if (cachedDataset && cachedVersion === manifest.version) {

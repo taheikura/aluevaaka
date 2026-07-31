@@ -12,7 +12,7 @@ export function normalizeHigherIsBetter(
   min: number,
   max: number,
 ): number | undefined {
-  if (value === undefined || !isFinite(value)) return undefined;
+  if (value === undefined || !Number.isFinite(value)) return undefined;
   if (max === min) return 0.5;
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
@@ -23,7 +23,7 @@ export function normalizeLowerIsBetter(
   min: number,
   max: number,
 ): number | undefined {
-  if (value === undefined || !isFinite(value)) return undefined;
+  if (value === undefined || !Number.isFinite(value)) return undefined;
   if (max === min) return 0.5;
   return Math.max(0, Math.min(1, 1 - (value - min) / (max - min)));
 }
@@ -35,7 +35,7 @@ export function normalizeLowerIsBetter(
 export function columnRange(
   values: (number | undefined)[],
 ): { min: number; max: number } | undefined {
-  const valid = values.filter((v): v is number => v !== undefined && isFinite(v));
+  const valid = values.filter((v): v is number => v !== undefined && Number.isFinite(v));
   if (valid.length < 2) return undefined;
   return {
     min: Math.min(...valid),

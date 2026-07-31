@@ -2,21 +2,66 @@
  * Integration tests for the Lambda handler routing and response shapes.
  * S3 calls are mocked via vi.mock so no AWS credentials are needed.
  */
+
+import type { Context, LambdaFunctionURLEvent } from 'aws-lambda';
 import { describe, expect, it, vi } from 'vitest';
-import type { LambdaFunctionURLEvent, Context } from 'aws-lambda';
 import type { HandlerResponse } from '../response.js';
 
 // Mock the dataset module before importing the handler
 vi.mock('../dataset.js', () => ({
   loadDataset: vi.fn().mockResolvedValue({
-    manifest: { version: '2026-07-30', generatedAt: '2026-07-30T00:00:00Z', municipalityCount: 2, sources: [], qualityWarnings: [] },
+    manifest: {
+      version: '2026-07-30',
+      generatedAt: '2026-07-30T00:00:00Z',
+      municipalityCount: 2,
+      sources: [],
+      qualityWarnings: [],
+    },
     municipalities: [
-      { id: '091', nameFi: 'Helsinki', region: 'Uusimaa', coordinates: { lat: 60.17, lng: 24.94 }, population: 660000, areaKm2: 715 },
-      { id: '837', nameFi: 'Tampere', region: 'Pirkanmaa', coordinates: { lat: 61.5, lng: 23.77 }, population: 240000, areaKm2: 689 },
+      {
+        id: '091',
+        nameFi: 'Helsinki',
+        region: 'Uusimaa',
+        coordinates: { lat: 60.17, lng: 24.94 },
+        population: 660000,
+        areaKm2: 715,
+      },
+      {
+        id: '837',
+        nameFi: 'Tampere',
+        region: 'Pirkanmaa',
+        coordinates: { lat: 61.5, lng: 23.77 },
+        population: 240000,
+        areaKm2: 689,
+      },
     ],
     metrics: [
-      { id: '091', housingPricePerM2: 4500, avgMonthlyRent2r: 1800, distanceToHealthcareCentreKm: 1, distanceToRailKm: 0.5, broadbandAvailabilityPercent: 99, forestCoverPercent: 20, distanceToWaterKm: 1, unemploymentRatePercent: 7, netMigrationPer1000: 5, medianHouseholdIncomeEur: 38000 },
-      { id: '837', housingPricePerM2: 2200, avgMonthlyRent2r: 900, distanceToHealthcareCentreKm: 3, distanceToRailKm: 1, broadbandAvailabilityPercent: 95, forestCoverPercent: 40, distanceToWaterKm: 2, unemploymentRatePercent: 9, netMigrationPer1000: 2, medianHouseholdIncomeEur: 32000 },
+      {
+        id: '091',
+        housingPricePerM2: 4500,
+        avgMonthlyRent2r: 1800,
+        distanceToHealthcareCentreKm: 1,
+        distanceToRailKm: 0.5,
+        broadbandAvailabilityPercent: 99,
+        forestCoverPercent: 20,
+        distanceToWaterKm: 1,
+        unemploymentRatePercent: 7,
+        netMigrationPer1000: 5,
+        medianHouseholdIncomeEur: 38000,
+      },
+      {
+        id: '837',
+        housingPricePerM2: 2200,
+        avgMonthlyRent2r: 900,
+        distanceToHealthcareCentreKm: 3,
+        distanceToRailKm: 1,
+        broadbandAvailabilityPercent: 95,
+        forestCoverPercent: 40,
+        distanceToWaterKm: 2,
+        unemploymentRatePercent: 9,
+        netMigrationPer1000: 2,
+        medianHouseholdIncomeEur: 32000,
+      },
     ],
     ranges: {
       housingPricePerM2: { min: 2200, max: 4500 },
@@ -34,8 +79,8 @@ vi.mock('../dataset.js', () => ({
 }));
 
 // Set required env var before importing handler
-process.env['DATA_BUCKET'] = 'test-bucket';
-process.env['ALLOWED_ORIGINS'] = 'http://localhost:5173';
+process.env.DATA_BUCKET = 'test-bucket';
+process.env.ALLOWED_ORIGINS = 'http://localhost:5173';
 
 const { handler } = await import('../index.js');
 

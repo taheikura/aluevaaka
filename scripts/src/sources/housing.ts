@@ -50,7 +50,7 @@ export async function fetchHousingPrices(): Promise<{
       const price = parseFloat(row.values[0] ?? '');
       return {
         municipalityId: row.key[1] ?? '',
-        housingPricePerM2: isNaN(price) ? undefined : price,
+        housingPricePerM2: Number.isNaN(price) ? undefined : price,
       };
     })
     .filter((r) => r.municipalityId !== '');

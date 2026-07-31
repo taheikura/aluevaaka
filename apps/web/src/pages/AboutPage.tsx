@@ -21,8 +21,9 @@ export function AboutPage() {
           pisteytystä.
         </p>
         <p>
-          Pisteet kuvaavat kunnan sijoittumista <em>muihin kuntiin verrattuna sinun
-          painotuksillasi</em> – ne eivät ole absoluuttisia mittoja.
+          Pisteet kuvaavat kunnan sijoittumista{' '}
+          <em>muihin kuntiin verrattuna sinun painotuksillasi</em> – ne eivät ole absoluuttisia
+          mittoja.
         </p>
       </section>
 

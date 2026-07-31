@@ -16,13 +16,13 @@ export const config = {
   dataBucket: requireEnv('DATA_BUCKET'),
 
   /** S3 key prefix for generated datasets, e.g. "data/generated" */
-  dataPrefix: process.env['DATA_PREFIX'] ?? 'data/generated',
+  dataPrefix: process.env.DATA_PREFIX ?? 'data/generated',
 
   /** AWS region — always available inside Lambda */
-  region: process.env['AWS_REGION'] ?? 'eu-north-1',
+  region: process.env.AWS_REGION ?? 'eu-north-1',
 
   /** Deployed service version, injected by CI */
-  serviceVersion: process.env['SERVICE_VERSION'] ?? 'unknown',
+  serviceVersion: process.env.SERVICE_VERSION ?? 'unknown',
 
   /** Maximum request body size in bytes (100 KB) */
   maxBodyBytes: 100 * 1024,

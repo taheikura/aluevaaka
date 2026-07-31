@@ -1,13 +1,13 @@
+import * as path from 'node:path';
+import * as url from 'node:url';
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as logs from 'aws-cdk-lib/aws-logs';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as actions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
-import * as path from 'node:path';
-import * as url from 'node:url';
 import type { EnvConfig } from '../config.js';
 import type { Storage } from './storage.js';
 
@@ -71,7 +71,7 @@ export class RecommendationLambda extends Construct {
         DATA_BUCKET: storage.dataBucket.bucketName,
         DATA_PREFIX: config.dataPrefix,
         ALLOWED_ORIGINS: frontendOrigin,
-        SERVICE_VERSION: process.env['SERVICE_VERSION'] ?? 'local',
+        SERVICE_VERSION: process.env.SERVICE_VERSION ?? 'local',
         NODE_OPTIONS: '--enable-source-maps',
       },
       // No VPC — avoids NAT Gateway cost per the design document

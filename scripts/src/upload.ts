@@ -9,17 +9,17 @@
  *
  * Run: DATA_BUCKET=my-bucket pnpm --filter @aluevaaka/scripts upload
  */
-import { readFile, readdir } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { log } from './lib/logger.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-const DATA_BUCKET = process.env['DATA_BUCKET'];
-const DATA_PREFIX = process.env['DATA_PREFIX'] ?? 'data/generated';
-const REGION = process.env['AWS_REGION'] ?? 'eu-north-1';
+const DATA_BUCKET = process.env.DATA_BUCKET;
+const DATA_PREFIX = process.env.DATA_PREFIX ?? 'data/generated';
+const REGION = process.env.AWS_REGION ?? 'eu-north-1';
 const LOCAL_DIR = join(__dirname, '../../data/generated');
 
 if (!DATA_BUCKET) {
@@ -48,7 +48,7 @@ async function upload(): Promise<void> {
       const localPath = join(LOCAL_DIR, file);
       const key = `${DATA_PREFIX}/${file}`;
       const body = await readFile(localPath);
-      const ext = '.' + (basename(file).split('.').pop() ?? '');
+      const ext = `.${basename(file).split('.').pop() ?? ''}`;
 
       await s3.send(
         new PutObjectCommand({

@@ -77,12 +77,7 @@ export type HealthResponse = z.infer<typeof HealthResponseSchema>;
 export const ApiErrorSchema = z.object({
   error: z.string(),
   /** Machine-readable code */
-  code: z.enum([
-    'VALIDATION_ERROR',
-    'DATASET_UNAVAILABLE',
-    'INTERNAL_ERROR',
-    'REQUEST_TOO_LARGE',
-  ]),
+  code: z.enum(['VALIDATION_ERROR', 'DATASET_UNAVAILABLE', 'INTERNAL_ERROR', 'REQUEST_TOO_LARGE']),
   details: z.record(z.unknown()).optional(),
 });
 

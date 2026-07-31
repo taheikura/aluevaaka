@@ -9,15 +9,15 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
+import { log } from './lib/logger.js';
 import {
   buildReport,
   checkMinimumRecordCount,
-  checkNoDuplicateIds,
-  checkValidCoordinates,
-  checkNumericRange,
   checkMissingValueRate,
+  checkNoDuplicateIds,
+  checkNumericRange,
+  checkValidCoordinates,
 } from './lib/quality.js';
-import { log } from './lib/logger.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DATA_DIR = join(__dirname, '../../data/generated');
@@ -36,11 +36,27 @@ async function validate(): Promise<void> {
 
   const results = [
     checkMinimumRecordCount(municipalities.length, 200, 'municipalities'),
-    checkNoDuplicateIds(municipalities.map((m) => m.id), 'municipalities'),
+    checkNoDuplicateIds(
+      municipalities.map((m) => m.id),
+      'municipalities',
+    ),
     checkValidCoordinates(municipalities.map((m) => ({ ...m.coordinates, id: m.id }))),
-    checkNumericRange(metrics.map((m) => m.unemploymentRatePercent), 0, 50, 'unemploymentRatePercent'),
-    checkMissingValueRate(metrics.map((m) => m.housingPricePerM2), 0.6, 'housingPricePerM2'),
-    checkMissingValueRate(metrics.map((m) => m.unemploymentRatePercent), 0.1, 'unemploymentRatePercent'),
+    checkNumericRange(
+      metrics.map((m) => m.unemploymentRatePercent),
+      0,
+      50,
+      'unemploymentRatePercent',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.housingPricePerM2),
+      0.6,
+      'housingPricePerM2',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.unemploymentRatePercent),
+      0.1,
+      'unemploymentRatePercent',
+    ),
   ];
 
   const report = buildReport(results);

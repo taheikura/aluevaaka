@@ -5,9 +5,6 @@
     "outDir": "dist",
     "composite": true
   },
-  "references": [
-    { "path": "../data-model" },
-    { "path": "../schemas" }
-  ],
+  "references": [{ "path": "../data-model" }, { "path": "../schemas" }],
   "include": ["src"]
 }

@@ -19,7 +19,7 @@ const BASE_HEADERS = {
 export function corsHeaders(origin: string | undefined): Record<string, string> {
   // Only echo back origins explicitly listed in ALLOWED_ORIGINS env var.
   // Falls back to a safe empty string if origin is not allowed.
-  const allowed = (process.env['ALLOWED_ORIGINS'] ?? '').split(',').map((s) => s.trim());
+  const allowed = (process.env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim());
   const allowedOrigin = origin && allowed.includes(origin) ? origin : '';
 
   return allowedOrigin
@@ -40,11 +40,7 @@ export function ok(body: unknown, origin?: string): HandlerResponse {
   };
 }
 
-export function error(
-  statusCode: number,
-  payload: ApiError,
-  origin?: string,
-): HandlerResponse {
+export function error(statusCode: number, payload: ApiError, origin?: string): HandlerResponse {
   return {
     statusCode,
     headers: { ...BASE_HEADERS, ...corsHeaders(origin) },

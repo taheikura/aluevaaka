@@ -114,9 +114,7 @@ export function checkNumericRange(
   max: number,
   fieldName: string,
 ): QualityResult {
-  const outOfRange = values.filter(
-    (v) => v !== undefined && (v < min || v > max),
-  ) as number[];
+  const outOfRange = values.filter((v) => v !== undefined && (v < min || v > max)) as number[];
   return {
     check: `numeric_range_${fieldName}`,
     passed: outOfRange.length === 0,

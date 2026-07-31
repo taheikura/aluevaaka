@@ -2,7 +2,16 @@
   "app": "node --input-type=module --experimental-vm-modules dist/bin/app.js",
   "watch": {
     "include": ["**"],
-    "exclude": ["README.md", "cdk*.json", "**/*.d.ts", "**/*.js", "tsconfig.json", "package.json", "node_modules", "cdk.out"]
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
+      "package.json",
+      "node_modules",
+      "cdk.out"
+    ]
   },
   "context": {
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,

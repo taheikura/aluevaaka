@@ -64,77 +64,90 @@ export function buildRanges(metrics: MunicipalityMetrics[]): MetricRanges {
 // Category scores
 // ---------------------------------------------------------------------------
 
-function scoreHousing(
-  m: MunicipalityMetrics,
-  ranges: MetricRanges,
-): number | undefined {
+function scoreHousing(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const r = ranges.avgMonthlyRent2r ?? ranges.housingPricePerM2;
   const v = m.avgMonthlyRent2r ?? m.housingPricePerM2;
   if (!r) return undefined;
   return normalizeLowerIsBetter(v, r.min, r.max);
 }
 
-function scoreHealthcare(
-  m: MunicipalityMetrics,
-  ranges: MetricRanges,
-): number | undefined {
+function scoreHealthcare(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const r = ranges.distanceToHealthcareCentreKm;
   if (!r) return undefined;
   return normalizeLowerIsBetter(m.distanceToHealthcareCentreKm, r.min, r.max);
 }
 
-function scoreTransport(
-  m: MunicipalityMetrics,
-  ranges: MetricRanges,
-): number | undefined {
+function scoreTransport(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const scores: number[] = [];
 
   if (ranges.distanceToRailKm) {
-    const s = normalizeLowerIsBetter(m.distanceToRailKm, ranges.distanceToRailKm.min, ranges.distanceToRailKm.max);
+    const s = normalizeLowerIsBetter(
+      m.distanceToRailKm,
+      ranges.distanceToRailKm.min,
+      ranges.distanceToRailKm.max,
+    );
     if (s !== undefined) scores.push(s);
   }
   if (ranges.broadbandAvailabilityPercent) {
-    const s = normalizeHigherIsBetter(m.broadbandAvailabilityPercent, ranges.broadbandAvailabilityPercent.min, ranges.broadbandAvailabilityPercent.max);
+    const s = normalizeHigherIsBetter(
+      m.broadbandAvailabilityPercent,
+      ranges.broadbandAvailabilityPercent.min,
+      ranges.broadbandAvailabilityPercent.max,
+    );
     if (s !== undefined) scores.push(s);
   }
 
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
 }
 
-function scoreNature(
-  m: MunicipalityMetrics,
-  ranges: MetricRanges,
-): number | undefined {
+function scoreNature(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const scores: number[] = [];
 
   if (ranges.forestCoverPercent) {
-    const s = normalizeHigherIsBetter(m.forestCoverPercent, ranges.forestCoverPercent.min, ranges.forestCoverPercent.max);
+    const s = normalizeHigherIsBetter(
+      m.forestCoverPercent,
+      ranges.forestCoverPercent.min,
+      ranges.forestCoverPercent.max,
+    );
     if (s !== undefined) scores.push(s);
   }
   if (ranges.distanceToWaterKm) {
-    const s = normalizeLowerIsBetter(m.distanceToWaterKm, ranges.distanceToWaterKm.min, ranges.distanceToWaterKm.max);
+    const s = normalizeLowerIsBetter(
+      m.distanceToWaterKm,
+      ranges.distanceToWaterKm.min,
+      ranges.distanceToWaterKm.max,
+    );
     if (s !== undefined) scores.push(s);
   }
 
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
 }
 
-function scoreEconomic(
-  m: MunicipalityMetrics,
-  ranges: MetricRanges,
-): number | undefined {
+function scoreEconomic(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const scores: number[] = [];
 
   if (ranges.unemploymentRatePercent) {
-    const s = normalizeLowerIsBetter(m.unemploymentRatePercent, ranges.unemploymentRatePercent.min, ranges.unemploymentRatePercent.max);
+    const s = normalizeLowerIsBetter(
+      m.unemploymentRatePercent,
+      ranges.unemploymentRatePercent.min,
+      ranges.unemploymentRatePercent.max,
+    );
     if (s !== undefined) scores.push(s);
   }
   if (ranges.netMigrationPer1000) {
-    const s = normalizeHigherIsBetter(m.netMigrationPer1000, ranges.netMigrationPer1000.min, ranges.netMigrationPer1000.max);
+    const s = normalizeHigherIsBetter(
+      m.netMigrationPer1000,
+      ranges.netMigrationPer1000.min,
+      ranges.netMigrationPer1000.max,
+    );
     if (s !== undefined) scores.push(s);
   }
   if (ranges.medianHouseholdIncomeEur) {
-    const s = normalizeHigherIsBetter(m.medianHouseholdIncomeEur, ranges.medianHouseholdIncomeEur.min, ranges.medianHouseholdIncomeEur.max);
+    const s = normalizeHigherIsBetter(
+      m.medianHouseholdIncomeEur,
+      ranges.medianHouseholdIncomeEur.min,
+      ranges.medianHouseholdIncomeEur.max,
+    );
     if (s !== undefined) scores.push(s);
   }
 
@@ -245,7 +258,10 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
     let weightedScore = 0;
     let appliedWeight = 0;
 
-    for (const [key, rawScore] of Object.entries(categoryScores) as [keyof CategoryScores, number | undefined][]) {
+    for (const [key, rawScore] of Object.entries(categoryScores) as [
+      keyof CategoryScores,
+      number | undefined,
+    ][]) {
       if (rawScore === undefined) continue;
       const w = normalizedWeights[key] ?? 0;
       weightedScore += w * rawScore;

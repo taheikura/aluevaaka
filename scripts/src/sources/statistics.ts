@@ -68,7 +68,7 @@ export async function fetchPopulation(): Promise<{
       municipalityId: row.key[1] ?? '',
       population: parseInt(row.values[0] ?? '0', 10),
     }))
-    .filter((r) => r.municipalityId && !isNaN(r.population));
+    .filter((r) => r.municipalityId && !Number.isNaN(r.population));
 
   log.info('fetch_population_done', { count: records.length });
 
@@ -114,7 +114,7 @@ export async function fetchMedianIncome(): Promise<{
       municipalityId: row.key[1] ?? '',
       medianHouseholdIncomeEur: parseFloat(row.values[0] ?? '0'),
     }))
-    .filter((r) => r.municipalityId && !isNaN(r.medianHouseholdIncomeEur));
+    .filter((r) => r.municipalityId && !Number.isNaN(r.medianHouseholdIncomeEur));
 
   log.info('fetch_income_done', { count: records.length });
 
@@ -160,7 +160,7 @@ export async function fetchUnemploymentRate(): Promise<{
       municipalityId: row.key[1] ?? '0',
       unemploymentRatePercent: parseFloat(row.values[0] ?? '0'),
     }))
-    .filter((r) => r.municipalityId && !isNaN(r.unemploymentRatePercent));
+    .filter((r) => r.municipalityId && !Number.isNaN(r.unemploymentRatePercent));
 
   log.info('fetch_unemployment_done', { count: records.length });
 
@@ -205,7 +205,7 @@ export async function fetchNetMigration(): Promise<{
       municipalityId: row.key[1] ?? '',
       netMigrationPer1000: parseFloat(row.values[0] ?? '0'),
     }))
-    .filter((r) => r.municipalityId && !isNaN(r.netMigrationPer1000));
+    .filter((r) => r.municipalityId && !Number.isNaN(r.netMigrationPer1000));
 
   log.info('fetch_migration_done', { count: records.length });
 

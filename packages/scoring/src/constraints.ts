@@ -6,10 +6,7 @@ import type { Constraints } from '@aluevaaka/schemas';
  * A missing metric is treated as a constraint violation when a constraint
  * is defined — we prefer false negatives over misleading inclusions.
  */
-export function passesConstraints(
-  metrics: MunicipalityMetrics,
-  constraints: Constraints,
-): boolean {
+export function passesConstraints(metrics: MunicipalityMetrics, constraints: Constraints): boolean {
   if (!constraints) return true;
 
   if (constraints.maximumHousingCostEur !== undefined) {

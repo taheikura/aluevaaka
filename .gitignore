@@ -30,6 +30,9 @@ cdk.context.json
 *.swp
 *.swo
 
+# local Git hook installation
+.githooks-installed
+
 # OS
 .DS_Store
 Thumbs.db
