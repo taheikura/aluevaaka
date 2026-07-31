@@ -7,7 +7,7 @@ import type { EnvConfig } from '../config.js';
 
 export interface FrontendDistributionProps {
   config: EnvConfig;
-  webBucket: s3.Bucket;
+  webBucket: s3.IBucket;
 }
 
 /**
@@ -53,7 +53,7 @@ export class FrontendDistribution extends Construct {
 
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: `Aluevaaka web frontend (${envName})`,
-      priceClass: cloudfront.PriceClass[config.cfPriceClass],
+      priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
       defaultRootObject: 'index.html',
 
       defaultBehavior: {

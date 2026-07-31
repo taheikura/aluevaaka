@@ -8,6 +8,8 @@ build/
 out/
 *.tsbuildinfo
 cdk.out/
+services/recommendation/bundle/
+services/recommendation/lambda.zip
 
 # generated data (never commit generated artifacts)
 data/generated/

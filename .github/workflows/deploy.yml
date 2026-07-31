@@ -8,13 +8,13 @@ on:
       environment:
         description: Target environment
         required: true
-        default: production
+        default: development
         type: choice
         options: [production, development]
 
 concurrency:
   # Only one deploy per environment at a time
-  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}
   cancel-in-progress: false
 
 env:
@@ -24,24 +24,19 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Determine which environment to deploy to
+  # Determine which environment to deploy to. A normal merge to main deploys
+  # to development; production is intentionally manual only.
   # ---------------------------------------------------------------------------
   setup:
     name: Resolve environment
     runs-on: ubuntu-latest
     outputs:
       env_name: ${{ steps.resolve.outputs.env_name }}
-      aws_role_arn: ${{ steps.resolve.outputs.aws_role_arn }}
     steps:
       - id: resolve
         run: |
-          ENV="${{ github.event.inputs.environment || 'production' }}"
+          ENV="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}"
           echo "env_name=$ENV" >> "$GITHUB_OUTPUT"
-          if [ "$ENV" = "production" ]; then
-            echo "aws_role_arn=${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "aws_role_arn=${{ secrets.AWS_DEPLOY_ROLE_ARN_DEV }}" >> "$GITHUB_OUTPUT"
-          fi
 
   # ---------------------------------------------------------------------------
   # Build everything (same steps as CI but produces artifacts for deploy)
@@ -144,7 +139,14 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ needs.setup.outputs.env_name == 'production' && secrets.AWS_ACCOUNT_ID_PROD || secrets.AWS_ACCOUNT_ID_DEV }}:role/OrganizationAccountAccessRole
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Download Lambda bundle (CDK asset)
@@ -166,10 +168,9 @@ jobs:
           pnpm --filter @aluevaaka/infrastructure cdk deploy \
             --require-approval never \
             --context env=${{ needs.setup.outputs.env_name }} \
-            --context alertEmail=${{ secrets.ALERT_EMAIL }} \
-            --context githubRepo=${{ github.repository }}
+            --context alertEmail=${{ secrets.ALERT_EMAIL }}
         env:
-          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_ACCOUNT: ${{ needs.setup.outputs.env_name == 'production' && secrets.AWS_ACCOUNT_ID_PROD || secrets.AWS_ACCOUNT_ID_DEV }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
   # ---------------------------------------------------------------------------
@@ -205,7 +206,14 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ needs.setup.outputs.env_name == 'production' && secrets.AWS_ACCOUNT_ID_PROD || secrets.AWS_ACCOUNT_ID_DEV }}:role/OrganizationAccountAccessRole
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Read CDK stack outputs
@@ -302,6 +310,9 @@ jobs:
   smoke-test:
     name: Post-deploy smoke test
     needs: [setup, deploy-app]
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/smoke-test.yml
     with:
       function_url: ${{ needs.deploy-app.outputs.function_url }}

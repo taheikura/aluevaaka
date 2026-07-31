@@ -1,16 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 import type { EnvConfig } from '../config.js';
 import { Storage } from '../constructs/storage.js';
 import { RecommendationLambda } from '../constructs/recommendation-lambda.js';
 import { FrontendDistribution } from '../constructs/frontend-distribution.js';
-import { CiIdentity } from '../constructs/ci-identity.js';
 import { Observability } from '../constructs/observability.js';
 
 export interface AluevaakaStackProps extends cdk.StackProps {
   config: EnvConfig;
-  /** GitHub repo "owner/repo" for OIDC trust */
-  githubRepo: string;
 }
 
 /**
@@ -29,7 +27,7 @@ export class AluevaakaStack extends cdk.Stack {
     super(scope, id, {
       ...props,
       env: {
-        account: props.config.account ?? process.env['CDK_DEFAULT_ACCOUNT'],
+        account: props.config.account ?? process.env['CDK_DEFAULT_ACCOUNT'] ?? '*',
         region: props.config.region,
       },
     });
@@ -44,7 +42,7 @@ export class AluevaakaStack extends cdk.Stack {
     // 2. CloudFront distribution (depends on web bucket)
     const distribution = new FrontendDistribution(this, 'Frontend', {
       config: props.config,
-      webBucket: storage.webBucket,
+      webBucket: storage.webBucket as s3.IBucket,
     });
 
     // 3. Lambda + Function URL (depends on data bucket; needs CF domain for CORS)
@@ -54,16 +52,11 @@ export class AluevaakaStack extends cdk.Stack {
       frontendOrigin: distribution.domainName,
     });
 
-    // 4. CI/CD IAM identity (depends on all three above)
-    new CiIdentity(this, 'CiIdentity', {
-      config: props.config,
-      storage,
-      lambda,
-      distribution,
-      githubRepo: props.githubRepo,
-    });
+    // CI/CD identity is managed by the AWS Organization repository. The
+    // deployment workflow assumes that existing target-account role through
+    // the management-account GitHub OIDC role.
 
-    // 5. Dashboard + budget alarms
+    // 4. Dashboard + budget alarms
     new Observability(this, 'Observability', {
       config: props.config,
       lambda,

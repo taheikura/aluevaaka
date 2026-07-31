@@ -8,7 +8,7 @@ Finnish municipality recommendation platform. Enter your preferences for housing
 
 ## Architecture
 
-```
+```text
 Browser → CloudFront → S3 (static frontend)
 Browser → Lambda Function URL → Recommendation Lambda → S3 (generated datasets)
 GitHub Actions → CDK → AWS infrastructure
@@ -20,7 +20,7 @@ All infrastructure is serverless. No EC2, no RDS, no NAT Gateway, no always-on w
 ### Key decisions
 
 | Decision | Reason |
-|---|---|
+| --- | --- |
 | Lambda Function URL instead of API Gateway | One endpoint is sufficient for MVP; avoids extra config and per-request charges |
 | S3 + CloudFront for frontend | Static hosting, zero operational overhead |
 | Batch-generated S3 datasets instead of a database | Read-heavy recommendations don't need an always-on database |
@@ -35,7 +35,7 @@ To migrate from Lambda Function URL to API Gateway: update `infrastructure/src/s
 
 ## Repository structure
 
-```
+```text
 aluevaaka/
 ├── apps/
 │   └── web/                    # React + Vite frontend
@@ -74,16 +74,16 @@ aluevaaka/
 
 ---
 
-## Local development
+## Local Lambda development
 
-### Prerequisites
+### Local Lambda prerequisites
 
 - Node.js ≥ 20
 - pnpm ≥ 9 (`npm i -g pnpm`)
 - AWS CLI (for deployment and data upload)
 - AWS CDK (`npm i -g aws-cdk`)
 
-### First-time setup
+### AWS deployment setup
 
 ```bash
 pnpm install
@@ -259,7 +259,7 @@ pnpm --filter @aluevaaka/scripts upload
 ### Data sources
 
 | Metric | Source | License |
-|---|---|---|
+| --- | --- | --- |
 | Municipality boundaries and names | Statistics Finland WFS (geo.stat.fi) | CC BY 4.0 |
 | Population | Statistics Finland PxWeb (11re) | CC BY 4.0 |
 | Median household income | Statistics Finland PxWeb (11y9) | CC BY 4.0 |
@@ -277,13 +277,13 @@ Healthcare distance, transport connectivity, and nature indicators are stubbed i
 
 1. Create an AWS account and enable billing alerts.
 
-2. Bootstrap CDK in your account:
+1. Bootstrap CDK in your account:
 
 ```bash
 cdk bootstrap aws://<account-id>/eu-north-1
 ```
 
-3. Create the GitHub OIDC provider in IAM (one-time per account):
+1. Create the GitHub OIDC provider in IAM (one-time per account):
 
 ```bash
 aws iam create-open-id-connect-provider \
@@ -292,7 +292,10 @@ aws iam create-open-id-connect-provider \
   --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
 ```
 
-4. Deploy the CDK stack to create all infrastructure including the CI/CD role:
+1. Deploy the development CDK stack from an authenticated identity in the
+  `aluevaaka-dev` account. The GitHub OIDC and cross-account deployment roles
+  are managed by the `aws-portfolio-org` repository, so this stack does not
+  create a project-specific deploy role:
 
 ```bash
 cd infrastructure
@@ -305,36 +308,40 @@ echo 'export const handler = async () => ({ statusCode: 200, body: "pending" });
   > ../services/recommendation/bundle/index.mjs
 
 cdk deploy \
-  --context env=production \
-  --context alertEmail=you@example.com \
-  --context githubRepo=yourname/aluevaaka
+  --context env=development \
+  --context alertEmail=you@example.com
 ```
 
-5. Note the `DeployRoleArn` output and add it to GitHub repository secrets:
+1. Configure the GitHub repository secrets. The existing organization-level
+   OIDC role is assumed first, then GitHub Actions chains into the target
+   account role:
 
 | Secret | Value |
-|---|---|
-| `AWS_DEPLOY_ROLE_ARN_PROD` | ARN from CDK output `DeployRoleArn` |
-| `AWS_DEPLOY_ROLE_ARN_DEV` | ARN from dev stack (if using a dev environment) |
-| `AWS_ACCOUNT_ID` | Your 12-digit AWS account ID |
+| --- | --- |
+| `AWS_ROLE_ARN` | Existing management-account GitHub OIDC role from `aws-portfolio-org`, configured to trust this repository |
+| `AWS_ACCOUNT_ID_DEV` | 12-digit `aluevaaka-dev` account ID |
+| `AWS_ACCOUNT_ID_PROD` | Add later when a production account exists |
 | `ALERT_EMAIL` | Email for CloudWatch and budget alerts |
 
-6. Push to `main` — the deploy workflow runs automatically.
+The workflow first assumes `AWS_ROLE_ARN` in the management account, then
+chains into the standard `OrganizationAccountAccessRole` in the selected
+member account. No Aluevaaka-specific deploy role is created by CDK. The
+management role must have `sts:AssumeRole` permission for that target role,
+and its OIDC trust policy must include `repo:taheikura/aluevaaka:*`.
+
+1. Push to `main` — the development deployment runs automatically. Production
+  is only deployed by manually running the workflow and selecting
+  `production`.
 
 ### Deploying manually
 
-```bash
-# From infrastructure/
-cdk deploy \
-  --context env=production \
-  --context alertEmail=you@example.com \
-  --context githubRepo=yourname/aluevaaka
-```
+Production deployment remains unavailable until a production account and its
+cross-account deployment role are configured.
 
 ### Environments
 
 | Environment | Branch | Description |
-|---|---|---|
+| --- | --- | --- |
 | `development` | any | Temporary resources, DESTROY removal policy, short log retention |
 | `production` | `main` only | RETAIN removal policy, 90-day logs, tighter OIDC trust |
 
@@ -345,7 +352,7 @@ cdk deploy \
 With zero users, expected monthly cost in `eu-north-1`:
 
 | Service | Estimate |
-|---|---|
+| --- | --- |
 | S3 storage (< 1 GB) | < $0.03 |
 | CloudFront (< 1 GB transfer) | < $0.10 |
 | Lambda (zero invocations) | $0.00 |
@@ -364,7 +371,7 @@ Budget alerts are configured at $10/month (development) and $20/month (productio
 - **Alarms route to SNS** → email (configured via `alertEmail` context)
 - **Structured Lambda logs** in JSON — queryable with CloudWatch Logs Insights:
 
-```
+```text
 fields @timestamp, level, msg, durationMs, resultCount
 | filter level = "ERROR"
 | sort @timestamp desc
@@ -393,5 +400,5 @@ fields @timestamp, level, msg, durationMs, resultCount
 - Recommendations reflect publicly available statistics, not real-time conditions.
 - Housing price data has limited coverage for small municipalities (< 2 000 residents).
 - Healthcare distance, transport connectivity, and nature scores are not yet implemented — those categories will show no score until source adapters are added.
-- Scores represent match against *your weighted preferences*, not objective quality rankings.
+- Scores represent match against _your weighted preferences_, not objective quality rankings.
 - Dataset is refreshed weekly; source publication dates are shown per result.

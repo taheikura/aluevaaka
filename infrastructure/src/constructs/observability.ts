@@ -1,5 +1,6 @@
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as budgets from 'aws-cdk-lib/aws-budgets';
+import { Duration } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import type { EnvConfig } from '../config.js';
 import type { RecommendationLambda } from './recommendation-lambda.js';
@@ -34,35 +35,35 @@ export class Observability extends Construct {
     dashboard.addWidgets(
       new cloudwatch.GraphWidget({
         title: 'Invocations',
-        left: [fn.metricInvocations({ period: cloudwatch.Duration.minutes(5) })],
+        left: [fn.metricInvocations({ period: Duration.minutes(5) })],
         width: 8,
-      }),
+      }) as cloudwatch.IWidget,
       new cloudwatch.GraphWidget({
         title: 'Errors',
-        left: [fn.metricErrors({ period: cloudwatch.Duration.minutes(5) })],
+        left: [fn.metricErrors({ period: Duration.minutes(5) })],
         width: 8,
-      }),
+      }) as cloudwatch.IWidget,
       new cloudwatch.GraphWidget({
         title: 'Duration (p50 / p95)',
         left: [
-          fn.metricDuration({ period: cloudwatch.Duration.minutes(5), statistic: 'p50' }),
-          fn.metricDuration({ period: cloudwatch.Duration.minutes(5), statistic: 'p95' }),
+          fn.metricDuration({ period: Duration.minutes(5), statistic: 'p50' }),
+          fn.metricDuration({ period: Duration.minutes(5), statistic: 'p95' }),
         ],
         width: 8,
-      }),
+      }) as cloudwatch.IWidget,
     );
 
     dashboard.addWidgets(
       new cloudwatch.GraphWidget({
         title: 'Throttles',
-        left: [fn.metricThrottles({ period: cloudwatch.Duration.minutes(5) })],
+        left: [fn.metricThrottles({ period: Duration.minutes(5) })],
         width: 8,
-      }),
+      }) as cloudwatch.IWidget,
       new cloudwatch.AlarmWidget({
         title: 'Error Alarm',
         alarm: scope.node.findChild('RecommendationLambda').node.findChild('ErrorAlarm') as cloudwatch.Alarm,
         width: 8,
-      }),
+      }) as cloudwatch.IWidget,
     );
 
     // ---------------------------------------------------------------------------
@@ -102,7 +103,3 @@ export class Observability extends Construct {
     });
   }
 }
-
-// Re-export Duration for convenience in the construct (avoids an extra import)
-const { Duration } = cloudwatch;
-export { Duration };

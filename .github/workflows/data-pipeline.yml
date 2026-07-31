@@ -11,7 +11,7 @@ on:
       environment:
         description: Target environment
         required: true
-        default: production
+        default: development
         type: choice
         options: [production, development]
 
@@ -44,13 +44,20 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') && secrets.AWS_ACCOUNT_ID_PROD || secrets.AWS_ACCOUNT_ID_DEV }}:role/OrganizationAccountAccessRole
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Resolve data bucket from stack
         id: bucket
         run: |
-          ENV="${{ github.event.inputs.environment || 'production' }}"
+          ENV="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}"
           STACK="Aluevaaka-$(echo ${ENV^})"
           BUCKET=$(aws cloudformation describe-stacks \
             --stack-name "$STACK" \
@@ -76,7 +83,7 @@ jobs:
 
       - name: Run smoke test to verify dataset is live
         run: |
-          ENV="${{ github.event.inputs.environment || 'production' }}"
+          ENV="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}"
           STACK="Aluevaaka-$(echo ${ENV^})"
           URL=$(aws cloudformation describe-stacks \
             --stack-name "$STACK" \
