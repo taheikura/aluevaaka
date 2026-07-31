@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import type { MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
+import { describe, expect, it } from 'vitest';
 import { buildRanges, rankMunicipalities } from '../engine.js';
 
 // ---------------------------------------------------------------------------

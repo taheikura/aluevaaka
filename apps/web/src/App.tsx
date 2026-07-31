@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout.js';
+import { AboutPage } from './pages/AboutPage.js';
 import { HomePage } from './pages/HomePage.js';
 import { ResultsPage } from './pages/ResultsPage.js';
-import { AboutPage } from './pages/AboutPage.js';
 
 export function App() {
   return (

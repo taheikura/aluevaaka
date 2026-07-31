@@ -4,10 +4,10 @@
  * esbuild re-bundles the compiled JS to ensure tree-shaking and
  * removes the AWS SDK (available in the Lambda runtime) from the bundle.
  */
-import { build } from 'esbuild';
-import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { ZipArchive } from 'archiver';
+import { build } from 'esbuild';
 
 const __dirname = new URL('.', import.meta.url).pathname;
 const root = join(__dirname, '..');
@@ -36,7 +36,17 @@ await build({
   },
 });
 
-// Create zip for CDK/Terraform asset upload
-execSync(`cd ${bundleDir} && zip -r ../lambda.zip .`, { stdio: 'inherit' });
+// Create zip for CDK/Terraform asset upload without requiring the host's zip CLI.
+const zipPath = join(root, 'lambda.zip');
+await new Promise((resolve, reject) => {
+  const output = createWriteStream(zipPath);
+  const archive = new ZipArchive({ zlib: { level: 9 } });
+
+  output.on('close', resolve);
+  archive.on('error', reject);
+  archive.pipe(output);
+  archive.directory(bundleDir, false);
+  archive.finalize();
+});
 
 console.log('Bundle written to services/recommendation/lambda.zip');

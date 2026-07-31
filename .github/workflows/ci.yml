@@ -90,7 +90,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Check formatting
-        run: pnpm exec prettier --check "**/*.{ts,tsx,json,md}" --ignore-path .gitignore
+        run: pnpm format:check
 
   # ---------------------------------------------------------------------------
   # Unit tests

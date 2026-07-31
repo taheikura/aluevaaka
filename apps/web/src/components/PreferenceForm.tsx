@@ -1,5 +1,5 @@
-import { type FormEvent, useState } from 'react';
 import type { Preferences, RecommendationRequest } from '@aluevaaka/schemas';
+import { type FormEvent, useState } from 'react';
 
 interface Props {
   onSubmit: (request: RecommendationRequest) => void;

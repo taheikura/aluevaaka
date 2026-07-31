@@ -9,7 +9,10 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "prepare": "node scripts/install-git-hooks.mjs",
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean",
     "dev:build": "pnpm --filter @aluevaaka/data-model build && pnpm --filter @aluevaaka/schemas build && pnpm --filter @aluevaaka/scoring build && pnpm --filter @aluevaaka/recommendation build:tsc",
@@ -23,6 +26,7 @@
     "dev:web": "pnpm --filter @aluevaaka/web dev"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
     "@types/node": "^20.14.0",
     "prettier": "^3.3.0",
     "typescript": "^5.5.0",

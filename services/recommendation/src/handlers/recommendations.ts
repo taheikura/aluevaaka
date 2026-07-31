@@ -3,7 +3,7 @@ import { rankMunicipalities } from '@aluevaaka/scoring';
 import { config } from '../config.js';
 import { loadDataset } from '../dataset.js';
 import { logger } from '../logger.js';
-import { error, ok, type HandlerResponse } from '../response.js';
+import { error, type HandlerResponse, ok } from '../response.js';
 
 export async function handleRecommendations(
   rawBody: string | null | undefined,

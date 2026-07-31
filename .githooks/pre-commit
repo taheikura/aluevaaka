@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -eu
+
+printf '%s\n' 'pre-commit: running Biome checks on staged files...'
+
+pnpm exec biome check --staged
+
+printf '%s\n' 'pre-commit: running typecheck and unit tests...'
+pnpm typecheck
+pnpm test
+
+printf '%s\n' 'pre-commit: checks passed.'

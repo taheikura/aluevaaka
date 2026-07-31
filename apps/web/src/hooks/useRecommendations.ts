@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import type { RecommendationRequest, RecommendationResponse } from '@aluevaaka/schemas';
+import { useState } from 'react';
 import { postRecommendations } from '../api/client.js';
 
 type State =

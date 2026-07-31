@@ -1,24 +1,21 @@
-export {
-  PreferencesSchema,
-  ConstraintsSchema,
-} from './preferences.js';
-
-export type { Preferences, Constraints } from './preferences.js';
-
-export {
-  RecommendationRequestSchema,
-  CategoryScoresSchema,
-  RecommendationResultSchema,
-  RecommendationResponseSchema,
-  HealthResponseSchema,
-  ApiErrorSchema,
-} from './api.js';
-
 export type {
-  RecommendationRequest,
-  CategoryScores,
-  RecommendationResult,
-  RecommendationResponse,
-  HealthResponse,
   ApiError,
+  CategoryScores,
+  HealthResponse,
+  RecommendationRequest,
+  RecommendationResponse,
+  RecommendationResult,
 } from './api.js';
+export {
+  ApiErrorSchema,
+  CategoryScoresSchema,
+  HealthResponseSchema,
+  RecommendationRequestSchema,
+  RecommendationResponseSchema,
+  RecommendationResultSchema,
+} from './api.js';
+export type { Constraints, Preferences } from './preferences.js';
+export {
+  ConstraintsSchema,
+  PreferencesSchema,
+} from './preferences.js';

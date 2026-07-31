@@ -7,28 +7,32 @@
  *   data/generated/dataset-manifest.json — DatasetManifest
  */
 
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { MunicipalityBase, MunicipalityMetrics, DatasetManifest } from '@aluevaaka/data-model';
-import { fetchMunicipalities } from './sources/municipalities.js';
-import { fetchPopulation, fetchMedianIncome, fetchUnemploymentRate, fetchNetMigration } from './sources/statistics.js';
-import { fetchHousingPrices } from './sources/housing.js';
+import type { DatasetManifest, MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
+import { log } from './lib/logger.js';
 import {
   buildReport,
-  checkMinimumRecordCount,
-  checkNoDuplicateIds,
-  checkValidCoordinates,
-  checkNumericRange,
-  checkMissingValueRate,
   checkDatasetShrinkage,
+  checkMinimumRecordCount,
+  checkMissingValueRate,
+  checkNoDuplicateIds,
+  checkNumericRange,
+  checkValidCoordinates,
 } from './lib/quality.js';
-import { log } from './lib/logger.js';
+import { fetchHousingPrices } from './sources/housing.js';
+import { fetchMunicipalities } from './sources/municipalities.js';
+import {
+  fetchMedianIncome,
+  fetchNetMigration,
+  fetchPopulation,
+  fetchUnemploymentRate,
+} from './sources/statistics.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const OUTPUT_DIR = join(__dirname, '../../data/generated');
-const TRANSFORM_VERSION = '1';
 
 export async function generate(): Promise<void> {
   log.info('pipeline_start');
@@ -64,11 +68,21 @@ export async function generate(): Promise<void> {
   // -------------------------------------------------------------------------
   // 2. Build lookup maps for efficient merge
   // -------------------------------------------------------------------------
-  const populationById = new Map(populationResult.records.map((r) => [r.municipalityId, r.population]));
-  const incomeById = new Map(incomeResult.records.map((r) => [r.municipalityId, r.medianHouseholdIncomeEur]));
-  const unemploymentById = new Map(unemploymentResult.records.map((r) => [r.municipalityId, r.unemploymentRatePercent]));
-  const migrationById = new Map(migrationResult.records.map((r) => [r.municipalityId, r.netMigrationPer1000]));
-  const housingById = new Map(housingResult.records.map((r) => [r.municipalityId, r.housingPricePerM2]));
+  const populationById = new Map(
+    populationResult.records.map((r) => [r.municipalityId, r.population]),
+  );
+  const incomeById = new Map(
+    incomeResult.records.map((r) => [r.municipalityId, r.medianHouseholdIncomeEur]),
+  );
+  const unemploymentById = new Map(
+    unemploymentResult.records.map((r) => [r.municipalityId, r.unemploymentRatePercent]),
+  );
+  const migrationById = new Map(
+    migrationResult.records.map((r) => [r.municipalityId, r.netMigrationPer1000]),
+  );
+  const housingById = new Map(
+    housingResult.records.map((r) => [r.municipalityId, r.housingPricePerM2]),
+  );
 
   // -------------------------------------------------------------------------
   // 3. Merge into typed structures
@@ -94,16 +108,21 @@ export async function generate(): Promise<void> {
   // -------------------------------------------------------------------------
   const qualityResults = [
     checkMinimumRecordCount(municipalities.length, 200, 'municipalities'),
-    checkNoDuplicateIds(municipalities.map((m) => m.id), 'municipalities'),
+    checkNoDuplicateIds(
+      municipalities.map((m) => m.id),
+      'municipalities',
+    ),
     checkValidCoordinates(municipalities.map((m) => ({ ...m.coordinates, id: m.id }))),
     checkNumericRange(
       metrics.map((m) => m.unemploymentRatePercent),
-      0, 50,
+      0,
+      50,
       'unemploymentRatePercent',
     ),
     checkNumericRange(
       metrics.map((m) => m.housingPricePerM2),
-      100, 20000,
+      100,
+      20000,
       'housingPricePerM2',
     ),
     checkMissingValueRate(

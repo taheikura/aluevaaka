@@ -1,7 +1,8 @@
 import http from 'node:http';
 
 const port = Number(process.env.PORT ?? 3000);
-const lambdaUrl = process.env.LAMBDA_URL ?? 'http://lambda:8080/2015-03-31/functions/function/invocations';
+const lambdaUrl =
+  process.env.LAMBDA_URL ?? 'http://lambda:8080/2015-03-31/functions/function/invocations';
 
 const routes = new Map([
   ['GET /health', '/health'],

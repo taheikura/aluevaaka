@@ -14,8 +14,8 @@
  *     --context githubRepo=yourname/aluevaaka
  */
 import * as cdk from 'aws-cdk-lib';
-import { AluevaakaStack } from '../stacks/aluevaaka-stack.js';
 import { getEnvConfig } from '../config.js';
+import { AluevaakaStack } from '../stacks/aluevaaka-stack.js';
 
 const app = new cdk.App();
 

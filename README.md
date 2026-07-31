@@ -89,6 +89,23 @@ aluevaaka/
 pnpm install
 ```
 
+`pnpm install` also installs the repository's Git pre-commit hook. Before a
+commit, the hook runs Biome on staged files, then the workspace type checks and
+unit tests. This catches most CI failures locally. If hooks are skipped because
+dependencies were already installed, run `pnpm install` again.
+
+Run the same checks manually at any time:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+```
+
+Biome is the only JavaScript/TypeScript lint-and-format tool used by this
+repository. Use `pnpm format` to apply formatting and `pnpm format:check` to
+check formatting without modifying files.
+
 ### Seed sample data (no API access needed)
 
 ```bash

@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
+import type * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import type { EnvConfig } from '../config.js';
 

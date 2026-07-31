@@ -5,14 +5,14 @@
  * Gateway is a one-line change to the base URL — nothing else changes.
  */
 import {
-  HealthResponseSchema,
-  RecommendationResponseSchema,
   type HealthResponse,
+  HealthResponseSchema,
   type RecommendationRequest,
   type RecommendationResponse,
+  RecommendationResponseSchema,
 } from '@aluevaaka/schemas';
 
-const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '/api';
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
 
 async function fetchApi<T>(
   path: string,

@@ -12,8 +12,7 @@
  * typical stat.fi open data GeoJSON shape.
  */
 
-import type { MunicipalityBase } from '@aluevaaka/data-model';
-import type { DataSourceProvenance } from '@aluevaaka/data-model';
+import type { DataSourceProvenance, MunicipalityBase } from '@aluevaaka/data-model';
 import { fetchJson } from '../lib/http.js';
 import { log } from '../lib/logger.js';
 
@@ -25,10 +24,10 @@ const SOURCE_URL =
 interface StatFiFeature {
   type: 'Feature';
   properties: {
-    kunta: string;       // municipality code e.g. "091"
-    nimi: string;        // Finnish name
-    namn: string;        // Swedish name
-    maakunta: string;    // region code
+    kunta: string; // municipality code e.g. "091"
+    nimi: string; // Finnish name
+    namn: string; // Swedish name
+    maakunta: string; // region code
   };
   geometry: {
     type: string;

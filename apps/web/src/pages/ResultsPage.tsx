@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom';
 import type { RecommendationResponse } from '@aluevaaka/schemas';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ResultCard } from '../components/ResultCard.js';
 import { ResultMap } from '../components/ResultMap.js';
 
@@ -16,7 +16,9 @@ export function ResultsPage() {
     return (
       <div className="results-empty">
         <p>Ei hakutuloksia. Palaa etusivulle ja tee haku.</p>
-        <button onClick={() => navigate('/')}>Etusivulle</button>
+        <button type="button" onClick={() => navigate('/')}>
+          Etusivulle
+        </button>
       </div>
     );
   }
@@ -30,7 +32,7 @@ export function ResultsPage() {
         <p className="dataset-version">
           Aineisto: <time dateTime={datasetVersion}>{datasetVersion}</time>
         </p>
-        <button className="back-button" onClick={() => navigate(-1)}>
+        <button type="button" className="back-button" onClick={() => navigate(-1)}>
           ← Muuta hakua
         </button>
       </div>

@@ -7,14 +7,14 @@
  * If you want to switch to MapLibre GL later, swap this component;
  * the interface stays the same.
  */
-import { useEffect, useRef } from 'react';
+
 import L from 'leaflet';
+import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { RecommendationResult } from '@aluevaaka/schemas';
-
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
 // Fix default marker icon paths broken by bundlers
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 // @ts-expect-error -- patching Leaflet default icon

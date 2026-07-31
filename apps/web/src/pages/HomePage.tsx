@@ -1,19 +1,9 @@
+import type { RecommendationRequest } from '@aluevaaka/schemas';
 import { useNavigate } from 'react-router-dom';
 import { PreferenceForm } from '../components/PreferenceForm.js';
 import { useRecommendations } from '../hooks/useRecommendations.js';
-import type { RecommendationRequest } from '@aluevaaka/schemas';
 
 export function HomePage() {
-  const navigate = useNavigate();
-  const { state, submit } = useRecommendations();
-
-  async function handleSubmit(request: RecommendationRequest) {
-    await submit(request);
-    if (state.status === 'success') {
-      navigate('/results', { state: { results: state } });
-    }
-  }
-
   // Navigate when state settles to success
   // (useEffect handles the async state update)
   return (
@@ -55,10 +45,7 @@ function RecommendenceFormSection() {
           Hakuvirhe: {state.message}
         </div>
       )}
-      <PreferenceForm
-        onSubmit={handleSubmit}
-        isLoading={state.status === 'loading'}
-      />
+      <PreferenceForm onSubmit={handleSubmit} isLoading={state.status === 'loading'} />
     </>
   );
 }

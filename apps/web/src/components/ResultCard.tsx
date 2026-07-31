@@ -49,7 +49,8 @@ export function ResultCard({ result, rank }: Props) {
           <h2 className="result-name">{result.name}</h2>
           <span className="result-region">{result.region}</span>
         </div>
-        <div className="result-overall-score" aria-label={`Kokonaispistemäärä: ${overallPct}`}>
+        <div className="result-overall-score">
+          <span className="score-label">Kokonaispistemäärä: </span>
           <span className="score-number">{overallPct}</span>
           <span className="score-max">/100</span>
         </div>

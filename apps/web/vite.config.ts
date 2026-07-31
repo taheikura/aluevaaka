@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
@@ -10,7 +10,7 @@ export default defineConfig({
       // or a deployed Function URL set in VITE_API_URL.
       // This avoids CORS issues in dev without changing production code.
       '/api': {
-        target: process.env['VITE_API_PROXY_TARGET'] ?? 'http://localhost:3000',
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/api/, ''),
         changeOrigin: true,
       },
