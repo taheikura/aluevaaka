@@ -1,0 +1,29 @@
+{
+  "version": "2.0",
+  "routeKey": "GET /health",
+  "rawPath": "/health",
+  "rawQueryString": "",
+  "headers": {
+    "host": "localhost:3000",
+    "content-type": "application/json"
+  },
+  "requestContext": {
+    "http": {
+      "method": "GET",
+      "path": "/health",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "sam-local"
+    },
+    "accountId": "000000000000",
+    "apiId": "local",
+    "domainName": "localhost",
+    "domainPrefix": "local",
+    "requestId": "local-health-1",
+    "routeKey": "GET /health",
+    "stage": "$default",
+    "time": "30/Jul/2026:00:00:00 +0000",
+    "timeEpoch": 1753228800000
+  },
+  "isBase64Encoded": false
+}

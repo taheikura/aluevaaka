@@ -1,0 +1,22 @@
+{
+  "name": "@aluevaaka/scripts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pipeline": "tsx src/pipeline.ts",
+    "validate": "tsx src/validate.ts",
+    "upload": "tsx src/upload.ts",
+    "seed:sample": "tsx src/seed-sample.ts"
+  },
+  "dependencies": {
+    "@aluevaaka/data-model": "workspace:*",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "tsx": "^4.15.0",
+    "typescript": "*"
+  }
+}

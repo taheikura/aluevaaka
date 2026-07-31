@@ -1,0 +1,242 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Install once, cache, share across jobs via upload-artifact
+  # ---------------------------------------------------------------------------
+  install:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.pnpm-cache.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+  # ---------------------------------------------------------------------------
+  # Typecheck all packages
+  # ---------------------------------------------------------------------------
+  typecheck:
+    name: Typecheck
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages (required before typechecking dependents)
+        run: |
+          pnpm --filter @aluevaaka/data-model build
+          pnpm --filter @aluevaaka/schemas build
+          pnpm --filter @aluevaaka/scoring build:tsc
+
+      - name: Typecheck all
+        run: pnpm -r typecheck
+
+  # ---------------------------------------------------------------------------
+  # Lint
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint & format
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm exec prettier --check "**/*.{ts,tsx,json,md}" --ignore-path .gitignore
+
+  # ---------------------------------------------------------------------------
+  # Unit tests
+  # ---------------------------------------------------------------------------
+  test:
+    name: Unit tests
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @aluevaaka/data-model build
+          pnpm --filter @aluevaaka/schemas build
+          pnpm --filter @aluevaaka/scoring build:tsc
+
+      - name: Run scoring tests
+        run: pnpm --filter @aluevaaka/scoring test
+
+      - name: Run Lambda handler tests
+        run: pnpm --filter @aluevaaka/recommendation test
+
+  # ---------------------------------------------------------------------------
+  # Build Lambda bundle
+  # ---------------------------------------------------------------------------
+  build-lambda:
+    name: Build Lambda bundle
+    needs: [typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: |
+          pnpm --filter @aluevaaka/data-model build
+          pnpm --filter @aluevaaka/schemas build
+          pnpm --filter @aluevaaka/scoring build
+
+      - name: Build Lambda bundle
+        run: pnpm --filter @aluevaaka/recommendation build
+
+      - name: Upload Lambda bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-bundle
+          path: services/recommendation/lambda.zip
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Build frontend
+  # ---------------------------------------------------------------------------
+  build-frontend:
+    name: Build frontend
+    needs: [typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build schemas (Vite needs types at build time)
+        run: pnpm --filter @aluevaaka/schemas build
+
+      - name: Build frontend
+        run: pnpm --filter @aluevaaka/web build
+        env:
+          # Use a placeholder URL in CI builds — the real URL is injected at deploy time
+          VITE_API_URL: https://placeholder.lambda-url.eu-north-1.on.aws
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist/
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # CDK synth — validate infrastructure is synthesisable
+  # ---------------------------------------------------------------------------
+  cdk-synth:
+    name: CDK synth
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build infrastructure
+        run: pnpm --filter @aluevaaka/infrastructure build
+
+      # Seed sample data so CDK Lambda asset path exists
+      - name: Seed sample Lambda bundle placeholder
+        run: |
+          mkdir -p services/recommendation/bundle
+          echo '{}' > services/recommendation/bundle/index.mjs
+
+      - name: CDK synth
+        env:
+          CDK_DEFAULT_ACCOUNT: "000000000000"
+          CDK_DEFAULT_REGION: eu-north-1
+        # Pass required context values — in real deploys these come from GitHub Secrets
+        run: |
+          pnpm --filter @aluevaaka/infrastructure cdk synth \
+            --context env=development \
+            --context alertEmail=ci@example.com \
+            --context githubRepo=owner/aluevaaka \
+            --no-staging 2>&1 | tail -20

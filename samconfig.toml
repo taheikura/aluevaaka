@@ -1,0 +1,17 @@
+# AWS SAM CLI configuration for local development.
+# Only used by `sam local` commands — production is managed by CDK.
+
+version = 0.1
+
+[default.local_start_api.parameters]
+# Reuse the container between requests for faster iteration
+warm_containers = "EAGER"
+# Port for the local HTTP server — matches Vite proxy default
+port = 3000
+# Skip building — we compile with tsc/esbuild ourselves
+skip_pull_image = false
+# Env file for local overrides (optional, see .env.sam.example)
+env_vars = "env.sam.json"
+
+[default.local_invoke.parameters]
+env_vars = "env.sam.json"

@@ -1,0 +1,31 @@
+{
+  "name": "aluevaaka",
+  "private": true,
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean",
+    "dev:build": "pnpm --filter @aluevaaka/data-model build && pnpm --filter @aluevaaka/schemas build && pnpm --filter @aluevaaka/scoring build && pnpm --filter @aluevaaka/recommendation build:tsc",
+    "dev:lambda": "./docker/lambda-local.sh start",
+    "dev:lambda:pull": "./docker/lambda-local.sh pull",
+    "dev:health": "./docker/lambda-local.sh health",
+    "dev:recommend": "./docker/lambda-local.sh recommend",
+    "dev:compose": "docker compose up --build",
+    "dev:compose:down": "docker compose down",
+    "dev:api": "sam local start-api --template template.yaml",
+    "dev:web": "pnpm --filter @aluevaaka/web dev"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}

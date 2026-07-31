@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "composite": true,
+    "lib": ["ES2022"]
+  },
+  "references": [
+    { "path": "../../packages/data-model" },
+    { "path": "../../packages/schemas" },
+    { "path": "../../packages/scoring" }
+  ],
+  "include": ["src"]
+}

@@ -1,0 +1,163 @@
+import { type FormEvent, useState } from 'react';
+import type { Preferences, RecommendationRequest } from '@aluevaaka/schemas';
+
+interface Props {
+  onSubmit: (request: RecommendationRequest) => void;
+  isLoading: boolean;
+}
+
+const CATEGORIES: { key: keyof Preferences; label: string; description: string }[] = [
+  {
+    key: 'housingAffordability',
+    label: 'Asumisen hinta',
+    description: 'Vuokra- ja ostotaso suhteessa muihin kuntiin',
+  },
+  {
+    key: 'healthcareAccess',
+    label: 'Terveydenhuolto',
+    description: 'Etäisyys terveyskeskukseen ja sairaanhoitopalvelut',
+  },
+  {
+    key: 'transportConnectivity',
+    label: 'Liikenne ja yhteydet',
+    description: 'Julkinen liikenne, raideyhteydet ja laajakaista',
+  },
+  {
+    key: 'natureAndRecreation',
+    label: 'Luonto ja virkistys',
+    description: 'Metsäisyys, vesistöt ja luontoalueet',
+  },
+  {
+    key: 'economicOutlook',
+    label: 'Talousnäkymät',
+    description: 'Työllisyys, muuttovoitto ja mediaanitulot',
+  },
+  {
+    key: 'services',
+    label: 'Palvelut',
+    description: 'Kauppa-, koulu- ja muut lähipalvelut',
+  },
+];
+
+const DEFAULT_PREFERENCES: Preferences = {
+  housingAffordability: 0,
+  healthcareAccess: 0,
+  transportConnectivity: 0,
+  natureAndRecreation: 0,
+  economicOutlook: 0,
+  services: 0,
+};
+
+export function PreferenceForm({ onSubmit, isLoading }: Props) {
+  const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
+  const [maxHousingCost, setMaxHousingCost] = useState('');
+  const [maxHealthcareKm, setMaxHealthcareKm] = useState('');
+
+  function handleSlider(key: keyof Preferences, value: number) {
+    setPreferences((prev) => ({ ...prev, [key]: value / 100 }));
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    const request: RecommendationRequest = {
+      preferences,
+      constraints: {
+        ...(maxHousingCost ? { maximumHousingCostEur: Number(maxHousingCost) } : {}),
+        ...(maxHealthcareKm ? { maximumDistanceToHealthcareKm: Number(maxHealthcareKm) } : {}),
+      },
+      limit: 10,
+    };
+    onSubmit(request);
+  }
+
+  const anyWeightSet = Object.values(preferences).some((v) => v > 0);
+
+  return (
+    <form onSubmit={handleSubmit} className="preference-form" noValidate>
+      <fieldset>
+        <legend>Mitä arvostat asuinpaikassasi?</legend>
+        <p className="form-hint">
+          Siirrä liukusäädin nollasta sadaan sen mukaan, kuinka tärkeä asia on sinulle. Painotukset
+          normalisoidaan automaattisesti.
+        </p>
+
+        {CATEGORIES.map(({ key, label, description }) => (
+          <div key={key} className="preference-row">
+            <label htmlFor={`pref-${key}`}>
+              <span className="pref-label">{label}</span>
+              <span className="pref-desc">{description}</span>
+            </label>
+            <div className="slider-wrapper">
+              <input
+                id={`pref-${key}`}
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round((preferences[key] ?? 0) * 100)}
+                onChange={(e) => handleSlider(key, Number(e.target.value))}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round((preferences[key] ?? 0) * 100)}
+              />
+              <output htmlFor={`pref-${key}`} className="slider-value">
+                {Math.round((preferences[key] ?? 0) * 100)}
+              </output>
+            </div>
+          </div>
+        ))}
+      </fieldset>
+
+      <fieldset>
+        <legend>Pakolliset ehdot (valinnainen)</legend>
+        <p className="form-hint">
+          Kunnat, jotka eivät täytä ehtoja, poistetaan tuloksista kokonaan.
+        </p>
+
+        <div className="constraint-row">
+          <label htmlFor="max-rent">Enimmäisvuokra (€/kk)</label>
+          <input
+            id="max-rent"
+            type="number"
+            min={300}
+            max={5000}
+            step={50}
+            placeholder="esim. 900"
+            value={maxHousingCost}
+            onChange={(e) => setMaxHousingCost(e.target.value)}
+          />
+        </div>
+
+        <div className="constraint-row">
+          <label htmlFor="max-healthcare">Enimmäisetäisyys terveyskeskukseen (km)</label>
+          <input
+            id="max-healthcare"
+            type="number"
+            min={1}
+            max={200}
+            step={5}
+            placeholder="esim. 30"
+            value={maxHealthcareKm}
+            onChange={(e) => setMaxHealthcareKm(e.target.value)}
+          />
+        </div>
+      </fieldset>
+
+      <button
+        type="submit"
+        disabled={!anyWeightSet || isLoading}
+        aria-busy={isLoading}
+        className="submit-button"
+      >
+        {isLoading ? 'Haetaan…' : 'Etsi sopivat kunnat'}
+      </button>
+
+      {!anyWeightSet && (
+        <p role="alert" className="form-error">
+          Aseta vähintään yksi painotus ennen hakua.
+        </p>
+      )}
+    </form>
+  );
+}

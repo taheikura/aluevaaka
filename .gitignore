@@ -1,0 +1,50 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+cdk.out/
+
+# generated data (never commit generated artifacts)
+data/generated/
+
+# environment
+.env
+.env.local
+.env.*
+!.env.example
+
+# AWS CDK
+cdk.context.json
+
+# AWS SAM
+.aws-sam/
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# test coverage
+coverage/
+.nyc_output/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# terraform (if ever used alongside CDK)
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan

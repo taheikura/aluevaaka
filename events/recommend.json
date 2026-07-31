@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /recommendations",
+  "rawPath": "/recommendations",
+  "rawQueryString": "",
+  "headers": {
+    "host": "localhost:3000",
+    "content-type": "application/json"
+  },
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/recommendations",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "sam-local"
+    },
+    "accountId": "000000000000",
+    "apiId": "local",
+    "domainName": "localhost",
+    "domainPrefix": "local",
+    "requestId": "local-recommend-1",
+    "routeKey": "POST /recommendations",
+    "stage": "$default",
+    "time": "30/Jul/2026:00:00:00 +0000",
+    "timeEpoch": 1753228800000
+  },
+  "body": "{\"preferences\":{\"housingAffordability\":0.4,\"healthcareAccess\":0.2,\"transportConnectivity\":0.2,\"natureAndRecreation\":0.2,\"economicOutlook\":0,\"services\":0},\"limit\":5}",
+  "isBase64Encoded": false
+}
