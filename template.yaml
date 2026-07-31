@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Aluevaaka — local development template for AWS SAM.
+  This file is used only for `sam local start-api` / `sam local invoke`.
+  Production infrastructure is managed by CDK in infrastructure/.
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures:
+      # SAM local always runs x86_64 regardless of arm64 setting —
+      # set arm64 here so the template matches CDK, SAM ignores it locally.
+      - arm64
+    MemorySize: 256
+    Timeout: 15
+    Environment:
+      Variables:
+        # SAM local serves files from the local filesystem.
+        # The mock S3 adapter (sam-local-env.ts) reads data/generated/ directly
+        # when DATA_BUCKET=local, bypassing the real S3 SDK call.
+        DATA_BUCKET: local
+        DATA_PREFIX: data/generated
+        ALLOWED_ORIGINS: "http://localhost:5173"
+        SERVICE_VERSION: local
+        NODE_OPTIONS: "--enable-source-maps"
+
+Resources:
+  RecommendationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: aluevaaka-recommendation-local
+      # Point at the compiled bundle directory produced by `pnpm build:tsc`
+      CodeUri: services/recommendation/dist/
+      Handler: index.handler
+      Description: Municipality recommendation engine (local dev)
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - "http://localhost:5173"
+          AllowMethods:
+            - GET
+            - POST
+          AllowHeaders:
+            - content-type
+      Events:
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /health
+            Method: GET
+        Recommendations:
+          Type: HttpApi
+          Properties:
+            Path: /recommendations
+            Method: POST
+        # OPTIONS for CORS preflight
+        RecommendationsOptions:
+          Type: HttpApi
+          Properties:
+            Path: /recommendations
+            Method: OPTIONS
+
+Outputs:
+  RecommendationApiUrl:
+    Description: Local SAM API endpoint
+    Value: http://localhost:3000

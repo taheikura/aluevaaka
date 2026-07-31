@@ -1,0 +1,96 @@
+name: Data pipeline
+
+on:
+  # Run weekly to keep datasets fresh
+  schedule:
+    - cron: "0 3 * * 1"  # Monday 03:00 UTC
+
+  # Trigger manually when source data is known to have updated
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: production
+        type: choice
+        options: [production, development]
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+  AWS_REGION: eu-north-1
+
+jobs:
+  run-pipeline:
+    name: Generate and upload dataset
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve data bucket from stack
+        id: bucket
+        run: |
+          ENV="${{ github.event.inputs.environment || 'production' }}"
+          STACK="Aluevaaka-$(echo ${ENV^})"
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?ExportName=='aluevaaka-${ENV}-data-bucket'].OutputValue" \
+            --output text)
+          echo "name=$BUCKET" >> "$GITHUB_OUTPUT"
+
+      - name: Run data pipeline
+        run: pnpm --filter @aluevaaka/scripts pipeline
+
+      - name: Upload to S3
+        run: pnpm --filter @aluevaaka/scripts upload
+        env:
+          DATA_BUCKET: ${{ steps.bucket.outputs.name }}
+          DATA_PREFIX: data/generated
+
+      - name: Save dataset as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dataset-${{ github.run_id }}
+          path: data/generated/
+          retention-days: 14
+
+      - name: Run smoke test to verify dataset is live
+        run: |
+          ENV="${{ github.event.inputs.environment || 'production' }}"
+          STACK="Aluevaaka-$(echo ${ENV^})"
+          URL=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?ExportName=='aluevaaka-${ENV}-function-url'].OutputValue" \
+            --output text)
+
+          # Give Lambda a moment to pick up the new dataset (cache invalidates on version change)
+          sleep 5
+
+          RESPONSE=$(curl --silent --fail --max-time 10 "$URL/health")
+          DATASET_STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('datasetStatus',''))")
+
+          if [ "$DATASET_STATUS" != "available" ]; then
+            echo "FAIL: dataset not available after upload"
+            exit 1
+          fi
+          echo "PASS: dataset available"

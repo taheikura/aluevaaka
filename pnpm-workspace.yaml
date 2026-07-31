@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "services/*"
+  - "packages/*"
+  - "infrastructure"
+  - "scripts"
+
+settings:
+  onlyBuiltDependencies:
+    - esbuild
+allowBuilds:
+  esbuild: false

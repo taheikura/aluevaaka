@@ -1,0 +1,203 @@
+name: Smoke test
+
+on:
+  # Called from deploy.yml after every deployment
+  workflow_call:
+    inputs:
+      function_url:
+        description: Lambda Function URL to test
+        required: true
+        type: string
+      environment:
+        description: Environment name (development|production)
+        required: false
+        type: string
+        default: production
+
+  # Also schedulable for continuous active monitoring without a deploy
+  schedule:
+    - cron: "0 6,18 * * *"   # twice daily at 06:00 and 18:00 UTC
+
+  # Manual trigger for ad-hoc checks
+  workflow_dispatch:
+    inputs:
+      function_url:
+        description: Lambda Function URL to test (leave empty to read from stack outputs)
+        required: false
+        type: string
+      environment:
+        description: Environment
+        required: true
+        default: production
+        type: choice
+        options: [production, development]
+
+env:
+  NODE_VERSION: "20"
+  AWS_REGION: eu-north-1
+
+jobs:
+  smoke-test:
+    name: Smoke test (${{ inputs.environment || 'production' }})
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Resolve the Function URL if not passed directly (scheduled/manual runs)
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ !inputs.function_url }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve Function URL from stack outputs
+        if: ${{ !inputs.function_url }}
+        id: resolve-url
+        run: |
+          ENV="${{ inputs.environment || 'production' }}"
+          STACK="Aluevaaka-$(echo ${ENV^})"
+          URL=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?ExportName=='aluevaaka-${ENV}-function-url'].OutputValue" \
+            --output text)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Set effective URL
+        id: url
+        run: |
+          EFFECTIVE="${{ inputs.function_url || steps.resolve-url.outputs.url }}"
+          if [ -z "$EFFECTIVE" ]; then
+            echo "ERROR: Could not determine Function URL"
+            exit 1
+          fi
+          echo "value=$EFFECTIVE" >> "$GITHUB_OUTPUT"
+
+      # -----------------------------------------------------------------------
+      # Health check
+      # -----------------------------------------------------------------------
+      - name: Health check — GET /health
+        id: health
+        run: |
+          RESPONSE=$(curl --silent --fail --max-time 10 \
+            "${{ steps.url.outputs.value }}/health")
+          echo "response=$RESPONSE"
+
+          STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status',''))")
+          DATASET_STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasetStatus',''))")
+          DATASET_VERSION=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('datasetVersion',''))")
+
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "dataset_status=$DATASET_STATUS" >> "$GITHUB_OUTPUT"
+          echo "dataset_version=$DATASET_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$STATUS" != "ok" ] && [ "$STATUS" != "degraded" ]; then
+            echo "FAIL: health status is '$STATUS'"
+            exit 1
+          fi
+
+          if [ "$DATASET_STATUS" != "available" ]; then
+            echo "FAIL: datasetStatus is '$DATASET_STATUS'"
+            exit 1
+          fi
+
+          echo "PASS: health ok, dataset $DATASET_VERSION available"
+
+      # -----------------------------------------------------------------------
+      # Recommendation request
+      # -----------------------------------------------------------------------
+      - name: Recommendation smoke test — POST /recommendations
+        id: recommend
+        run: |
+          PAYLOAD='{
+            "preferences": {
+              "housingAffordability": 0.4,
+              "healthcareAccess": 0.3,
+              "transportConnectivity": 0.3,
+              "natureAndRecreation": 0,
+              "economicOutlook": 0,
+              "services": 0
+            },
+            "limit": 3
+          }'
+
+          RESPONSE=$(curl --silent --fail --max-time 15 \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "$PAYLOAD" \
+            "${{ steps.url.outputs.value }}/recommendations")
+
+          echo "response=$RESPONSE"
+
+          # Validate response has results array
+          RESULT_COUNT=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          results = d.get('results', [])
+          print(len(results))
+          ")
+
+          DATASET_VERSION=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          print(d.get('datasetVersion', ''))
+          ")
+
+          echo "result_count=$RESULT_COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$RESULT_COUNT" -lt 1 ]; then
+            echo "FAIL: expected at least 1 result, got $RESULT_COUNT"
+            exit 1
+          fi
+
+          # Validate first result has required fields
+          python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          r = d['results'][0]
+          required = ['municipalityId', 'name', 'score', 'categoryScores', 'dataCompleteness']
+          missing = [k for k in required if k not in r]
+          if missing:
+              print(f'FAIL: result missing fields: {missing}')
+              sys.exit(1)
+          score = r['score']
+          if not (0 <= score <= 1):
+              print(f'FAIL: score {score} out of range [0,1]')
+              sys.exit(1)
+          print(f'PASS: {len(d[\"results\"])} results, top score {score:.3f}')
+          " <<< "$RESPONSE"
+
+      # -----------------------------------------------------------------------
+      # Validation error handling
+      # -----------------------------------------------------------------------
+      - name: Validation error smoke test — should return 400
+        run: |
+          HTTP_CODE=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 10 \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data '{"preferences": {"housingAffordability": 999}}' \
+            "${{ steps.url.outputs.value }}/recommendations")
+
+          if [ "$HTTP_CODE" != "400" ]; then
+            echo "FAIL: expected 400 for invalid input, got $HTTP_CODE"
+            exit 1
+          fi
+          echo "PASS: invalid input correctly rejected with 400"
+
+      # -----------------------------------------------------------------------
+      # Summary
+      # -----------------------------------------------------------------------
+      - name: Smoke test summary
+        if: always()
+        run: |
+          echo "### Smoke test results" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Check | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Function URL | \`${{ steps.url.outputs.value }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Health status | \`${{ steps.health.outputs.status }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dataset | \`${{ steps.health.outputs.dataset_version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Results returned | \`${{ steps.recommend.outputs.result_count }}\` |" >> "$GITHUB_STEP_SUMMARY"

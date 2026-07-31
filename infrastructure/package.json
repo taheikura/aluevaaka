@@ -1,0 +1,26 @@
+{
+  "name": "@aluevaaka/infrastructure",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf cdk.out dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "cdk": "cdk",
+    "diff": "cdk diff",
+    "synth": "cdk synth",
+    "deploy:prod": "cdk deploy --require-approval never --context env=production",
+    "deploy:dev": "cdk deploy --require-approval never --context env=development",
+    "destroy:dev": "cdk destroy --context env=development"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.148.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "aws-cdk": "^2.148.0",
+    "typescript": "*"
+  }
+}
