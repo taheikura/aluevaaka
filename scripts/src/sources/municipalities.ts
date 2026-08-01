@@ -19,7 +19,7 @@ import { log } from '../lib/logger.js';
 const SOURCE_URL =
   'https://geo.stat.fi/geoserver/wfs?service=WFS&version=2.0.0' +
   '&request=GetFeature&typeName=tilastointialueet:kunta4500k_2024' +
-  '&outputFormat=application/json';
+  '&outputFormat=application/json&srsName=EPSG:4326';
 
 interface StatFiFeature {
   type: 'Feature';

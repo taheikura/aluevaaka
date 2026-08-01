@@ -9,8 +9,6 @@ import { Storage } from '../constructs/storage.js';
 
 export interface AluevaakaStackProps extends cdk.StackProps {
   config: EnvConfig;
-  /** GitHub repo "owner/repo" for OIDC trust */
-  githubRepo: string;
 }
 
 /**

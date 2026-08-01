@@ -27,13 +27,15 @@ export async function fetchHousingPrices(): Promise<{
   log.info('fetch_housing_start');
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
-  const res = await fetch(`${PXWEB_BASE}/StatFin/ashi/statfin_ashi_pxt_11ls.px`, {
+  const res = await fetch(`${PXWEB_BASE}/StatFin/ashi/13mx.px`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: [
-        { code: 'Vuosi', selection: { filter: 'top', values: ['1'] } },
-        { code: 'Tiedot', selection: { filter: 'item', values: ['keskihinta'] } },
+        { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+        { code: 'kunta_1_20150101', selection: { filter: 'all', values: ['*'] } },
+        { code: 'talotyyppi_5_20111209', selection: { filter: 'item', values: ['0'] } },
+        { code: 'contentscode', selection: { filter: 'item', values: ['keskihinta_aritm_nw'] } },
       ],
       response: { format: 'json-stat2' },
     }),
@@ -42,14 +44,32 @@ export async function fetchHousingPrices(): Promise<{
   if (!res.ok) throw new Error(`Housing fetch failed: HTTP ${res.status}`);
 
   const data = (await res.json()) as {
-    data: Array<{ key: string[]; values: string[] }>;
+    id: string[];
+    size: number[];
+    dimension: Record<string, { category: { index: Record<string, number> } }>;
+    value: Array<number | null>;
   };
 
-  const records: HousingRecord[] = data.data
-    .map((row) => {
-      const price = parseFloat(row.values[0] ?? '');
+  const dimensions = data.id.map((id) => {
+    const index = data.dimension[id]?.category.index ?? {};
+    return Object.entries(index)
+      .sort(([, a], [, b]) => a - b)
+      .map(([key]) => key);
+  });
+
+  const records: HousingRecord[] = data.value
+    .map((value, flatIndex) => {
+      let remainder = flatIndex;
+      const indexes = data.size
+        .map((size) => {
+          const index = remainder % size;
+          remainder = Math.floor(remainder / size);
+          return index;
+        })
+        .reverse();
+      const price = value ?? Number.NaN;
       return {
-        municipalityId: row.key[1] ?? '',
+        municipalityId: dimensions[1]?.[indexes[1] ?? 0] ?? '',
         housingPricePerM2: Number.isNaN(price) ? undefined : price,
       };
     })
@@ -64,7 +84,7 @@ export async function fetchHousingPrices(): Promise<{
     records,
     provenance: {
       name: 'Statistics Finland — Average housing price per m² by municipality (PxWeb)',
-      url: `${PXWEB_BASE}/StatFin/ashi/statfin_ashi_pxt_11ls.px`,
+      url: `${PXWEB_BASE}/StatFin/ashi/13mx.px`,
       license: 'CC BY 4.0',
       fetchedAt,
       transformVersion: '1',
