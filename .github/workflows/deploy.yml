@@ -14,7 +14,7 @@ on:
 
 concurrency:
   # Only one deploy per environment at a time
-  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}
   cancel-in-progress: false
 
 env:
@@ -39,10 +39,10 @@ jobs:
           ENV="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}"
           echo "env_name=$ENV" >> "$GITHUB_OUTPUT"
           if [ "$ENV" = "production" ]; then
-            echo "aws_role_arn=${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}" >> "$GITHUB_OUTPUT"
+            echo "aws_role_arn=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/OrganizationAccountAccessRole" >> "$GITHUB_OUTPUT"
             echo "aws_account_id=${{ secrets.AWS_ACCOUNT_ID_PROD }}" >> "$GITHUB_OUTPUT"
           else
-            echo "aws_role_arn=${{ secrets.AWS_DEPLOY_ROLE_ARN_DEV }}" >> "$GITHUB_OUTPUT"
+            echo "aws_role_arn=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_DEV }}:role/OrganizationAccountAccessRole" >> "$GITHUB_OUTPUT"
             echo "aws_account_id=${{ secrets.AWS_ACCOUNT_ID_DEV }}" >> "$GITHUB_OUTPUT"
           fi
 
@@ -147,7 +147,14 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Download Lambda bundle (CDK asset)
@@ -207,7 +214,14 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Read CDK stack outputs
