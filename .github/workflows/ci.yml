@@ -63,7 +63,7 @@ jobs:
         run: |
           pnpm --filter @aluevaaka/data-model build
           pnpm --filter @aluevaaka/schemas build
-          pnpm --filter @aluevaaka/scoring build:tsc
+          pnpm --filter @aluevaaka/scoring build
 
       - name: Typecheck all
         run: pnpm -r typecheck
@@ -121,7 +121,7 @@ jobs:
         run: |
           pnpm --filter @aluevaaka/data-model build
           pnpm --filter @aluevaaka/schemas build
-          pnpm --filter @aluevaaka/scoring build:tsc
+          pnpm --filter @aluevaaka/scoring build
 
       - name: Run scoring tests
         run: pnpm --filter @aluevaaka/scoring test
