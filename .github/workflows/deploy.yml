@@ -302,6 +302,9 @@ jobs:
   smoke-test:
     name: Post-deploy smoke test
     needs: [setup, deploy-app]
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/smoke-test.yml
     with:
       function_url: ${{ needs.deploy-app.outputs.function_url }}

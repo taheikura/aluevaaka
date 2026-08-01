@@ -3,7 +3,15 @@ set -eu
 
 printf '%s\n' 'pre-commit: running Biome checks on staged files...'
 
-pnpm exec biome check --staged
+# Biome ignores non-supported staged files such as YAML, shell scripts, and
+# `.gitignore`. Avoid invoking it when the commit contains no supported files;
+# otherwise Biome exits with "No files were processed".
+STAGED_BIOME_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|mjs|cjs|ts|tsx|json|jsonc)$' || true)
+if [ -n "$STAGED_BIOME_FILES" ]; then
+	pnpm exec biome check --staged
+else
+	printf '%s\n' 'pre-commit: no Biome-supported staged files; skipping Biome.'
+fi
 
 printf '%s\n' 'pre-commit: running typecheck and unit tests...'
 pnpm typecheck
