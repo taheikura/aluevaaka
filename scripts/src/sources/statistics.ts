@@ -16,8 +16,35 @@ import { log } from '../lib/logger.js';
 const PXWEB_BASE = 'https://pxdata.stat.fi:443/PxWeb/api/v1/fi';
 
 interface PxWebResponse {
-  columns: Array<{ code: string; text: string }>;
-  data: Array<{ key: string[]; values: string[] }>;
+  id: string[];
+  size: number[];
+  dimension: Record<string, { category: { index: Record<string, number> } }>;
+  value: Array<number | null>;
+}
+
+function rows(data: PxWebResponse): Array<{ key: string[]; values: string[] }> {
+  const dimensions = data.id.map((id) => {
+    const index = data.dimension[id]?.category.index ?? {};
+    return Object.entries(index)
+      .sort(([, a], [, b]) => a - b)
+      .map(([key]) => key);
+  });
+
+  return data.value.map((value, flatIndex) => {
+    let remainder = flatIndex;
+    const indexes = data.size
+      .map((size) => {
+        const index = remainder % size;
+        remainder = Math.floor(remainder / size);
+        return index;
+      })
+      .reverse();
+
+    return {
+      key: indexes.map((index, dimension) => dimensions[dimension]?.[index] ?? ''),
+      values: [value === null ? '' : String(value)],
+    };
+  });
 }
 
 async function queryPxWeb(
@@ -54,16 +81,16 @@ export async function fetchPopulation(): Promise<{
 
   // Table: 11re -- Population by municipality and year
   // https://pxdata.stat.fi:443/PxWeb/api/v1/fi/StatFin/vaerak/statfin_vaerak_pxt_11re.px
-  const data = await queryPxWeb('StatFin/vaerak/statfin_vaerak_pxt_11re.px', {
+  const data = await queryPxWeb('StatFin/vaerak/11ra.px', {
     query: [
-      { code: 'Vuosi', selection: { filter: 'top', values: ['1'] } },
-      { code: 'Alue', selection: { filter: 'item', values: ['SSS'] } }, // all municipalities
-      { code: 'Tiedot', selection: { filter: 'item', values: ['vaesto'] } },
+      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'alue_23_20260101', selection: { filter: 'all', values: ['*'] } },
+      { code: 'contentscode', selection: { filter: 'item', values: ['vaerak-vaesto'] } },
     ],
     response: { format: 'json-stat2' },
   });
 
-  const records: PopulationRecord[] = data.data
+  const records: PopulationRecord[] = rows(data)
     .map((row) => ({
       municipalityId: row.key[1] ?? '',
       population: parseInt(row.values[0] ?? '0', 10),
@@ -76,7 +103,7 @@ export async function fetchPopulation(): Promise<{
     records,
     provenance: {
       name: 'Statistics Finland — Population by municipality (PxWeb)',
-      url: `${PXWEB_BASE}/StatFin/vaerak/statfin_vaerak_pxt_11re.px`,
+      url: `${PXWEB_BASE}/StatFin/vaerak/11ra.px`,
       license: 'CC BY 4.0',
       fetchedAt,
       transformVersion: '1',
@@ -101,15 +128,16 @@ export async function fetchMedianIncome(): Promise<{
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
   // Table: 11y9 -- Household income by municipality
-  const data = await queryPxWeb('StatFin/tjt/statfin_tjt_pxt_11y9.px', {
+  const data = await queryPxWeb('StatFin/tjt/14ww.px', {
     query: [
-      { code: 'Vuosi', selection: { filter: 'top', values: ['1'] } },
-      { code: 'Tiedot', selection: { filter: 'item', values: ['mediaanitulo'] } },
+      { code: 'alue_23_20250101', selection: { filter: 'all', values: ['*'] } },
+      { code: 'contentscode', selection: { filter: 'item', values: ['hkturaha18_med'] } },
+      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
     ],
     response: { format: 'json-stat2' },
   });
 
-  const records: IncomeRecord[] = data.data
+  const records: IncomeRecord[] = rows(data)
     .map((row) => ({
       municipalityId: row.key[1] ?? '',
       medianHouseholdIncomeEur: parseFloat(row.values[0] ?? '0'),
@@ -122,7 +150,7 @@ export async function fetchMedianIncome(): Promise<{
     records,
     provenance: {
       name: 'Statistics Finland — Median household income by municipality (PxWeb)',
-      url: `${PXWEB_BASE}/StatFin/tjt/statfin_tjt_pxt_11y9.px`,
+      url: `${PXWEB_BASE}/StatFin/tjt/14ww.px`,
       license: 'CC BY 4.0',
       fetchedAt,
       transformVersion: '1',
@@ -147,15 +175,16 @@ export async function fetchUnemploymentRate(): Promise<{
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
   // Table: 12b9 -- Unemployment rate by municipality
-  const data = await queryPxWeb('StatFin/tyokay/statfin_tyokay_pxt_12b9.px', {
+  const data = await queryPxWeb('StatFin/tyokay/115x.px', {
     query: [
-      { code: 'Vuosi', selection: { filter: 'top', values: ['1'] } },
-      { code: 'Tiedot', selection: { filter: 'item', values: ['tyottomyysaste'] } },
+      { code: 'alue_23_20250101', selection: { filter: 'all', values: ['*'] } },
+      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'contentscode', selection: { filter: 'item', values: ['tyokay-tyottomyysaste'] } },
     ],
     response: { format: 'json-stat2' },
   });
 
-  const records: UnemploymentRecord[] = data.data
+  const records: UnemploymentRecord[] = rows(data)
     .map((row) => ({
       municipalityId: row.key[1] ?? '0',
       unemploymentRatePercent: parseFloat(row.values[0] ?? '0'),
@@ -168,7 +197,7 @@ export async function fetchUnemploymentRate(): Promise<{
     records,
     provenance: {
       name: 'Statistics Finland — Unemployment rate by municipality (PxWeb)',
-      url: `${PXWEB_BASE}/StatFin/tyokay/statfin_tyokay_pxt_12b9.px`,
+      url: `${PXWEB_BASE}/StatFin/tyokay/115x.px`,
       license: 'CC BY 4.0',
       fetchedAt,
       transformVersion: '1',
@@ -192,15 +221,16 @@ export async function fetchNetMigration(): Promise<{
   log.info('fetch_migration_start');
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
-  const data = await queryPxWeb('StatFin/muutl/statfin_muutl_pxt_119z.px', {
+  const data = await queryPxWeb('StatFin/muutl/11ae.px', {
     query: [
-      { code: 'Vuosi', selection: { filter: 'top', values: ['1'] } },
-      { code: 'Tiedot', selection: { filter: 'item', values: ['nettomuutto_1000'] } },
+      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'alue_23_20260101', selection: { filter: 'all', values: ['*'] } },
+      { code: 'contentscode', selection: { filter: 'item', values: ['muutl-vm43_netto'] } },
     ],
     response: { format: 'json-stat2' },
   });
 
-  const records: MigrationRecord[] = data.data
+  const records: MigrationRecord[] = rows(data)
     .map((row) => ({
       municipalityId: row.key[1] ?? '',
       netMigrationPer1000: parseFloat(row.values[0] ?? '0'),
@@ -213,7 +243,7 @@ export async function fetchNetMigration(): Promise<{
     records,
     provenance: {
       name: 'Statistics Finland — Net migration per 1000 by municipality (PxWeb)',
-      url: `${PXWEB_BASE}/StatFin/muutl/statfin_muutl_pxt_119z.px`,
+      url: `${PXWEB_BASE}/StatFin/muutl/11ae.px`,
       license: 'CC BY 4.0',
       fetchedAt,
       transformVersion: '1',
