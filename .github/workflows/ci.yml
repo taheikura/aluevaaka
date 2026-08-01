@@ -73,6 +73,10 @@ jobs:
   # ---------------------------------------------------------------------------
   lint:
     name: Lint & format
+    # GitHub marks a pull request with merge conflicts as non-mergeable. Do not
+    # spend a runner on formatting a conflicted merge result; the required
+    # conflict resolution and the next push will trigger CI again.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.mergeable != false }}
     needs: install
     runs-on: ubuntu-latest
     steps:
