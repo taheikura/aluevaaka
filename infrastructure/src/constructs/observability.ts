@@ -66,6 +66,5 @@ export class Observability extends Construct {
         width: 8,
       }) as cloudwatch.IWidget,
     );
-
   }
 }
