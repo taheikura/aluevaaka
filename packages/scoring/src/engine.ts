@@ -262,13 +262,12 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       keyof CategoryScores,
       number | undefined,
     ][]) {
-      if (rawScore === undefined) continue;
       const w = normalizedWeights[key] ?? 0;
-      weightedScore += w * rawScore;
+      if (w === 0) continue;
+      weightedScore += w * (rawScore ?? 0.5);
       appliedWeight += w;
     }
 
-    // If none of the user's weighted categories had data, skip this municipality
     if (appliedWeight === 0) continue;
 
     // Re-normalise to applied weight so missing categories don't drag down the score
