@@ -43,8 +43,8 @@ jobs:
             echo "aws_role_arn=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/OrganizationAccountAccessRole" >> "$GITHUB_OUTPUT"
             echo "aws_account_id=${{ secrets.AWS_ACCOUNT_ID_PROD }}" >> "$GITHUB_OUTPUT"
           else
-            echo "aws_role_arn=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_DEV }}:role/OrganizationAccountAccessRole" >> "$GITHUB_OUTPUT"
-            echo "aws_account_id=${{ secrets.AWS_ACCOUNT_ID_DEV }}" >> "$GITHUB_OUTPUT"
+            echo "aws_role_arn=arn:aws:iam::385579115858:role/OrganizationAccountAccessRole" >> "$GITHUB_OUTPUT"
+            echo "aws_account_id=385579115858" >> "$GITHUB_OUTPUT"
           fi
 
   # ---------------------------------------------------------------------------
