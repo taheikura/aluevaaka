@@ -35,7 +35,7 @@ async function validate(): Promise<void> {
   ]);
 
   const results = [
-    checkMinimumRecordCount(municipalities.length, 200, 'municipalities'),
+    checkMinimumRecordCount(municipalities.length, 100, 'capital-area postal areas'),
     checkNoDuplicateIds(
       municipalities.map((m) => m.id),
       'municipalities',
@@ -56,6 +56,16 @@ async function validate(): Promise<void> {
       metrics.map((m) => m.unemploymentRatePercent),
       0.1,
       'unemploymentRatePercent',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.medianHouseholdIncomeEur),
+      0.1,
+      'medianHouseholdIncomeEur',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.netMigrationPer1000),
+      0.1,
+      'netMigrationPer1000',
     ),
   ];
 

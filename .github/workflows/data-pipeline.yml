@@ -67,13 +67,43 @@ jobs:
           echo "name=$BUCKET" >> "$GITHUB_OUTPUT"
 
       - name: Run data pipeline
-        run: pnpm --filter @aluevaaka/scripts pipeline
+        run: pnpm --filter @aluevaaka/scripts pipeline 2>&1 | tee pipeline.log
+
+      - name: Upload pipeline report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dataset-pipeline-report-${{ github.run_id }}
+          path: |
+            pipeline.log
+            data/generated/dataset-manifest.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload to S3
         run: pnpm --filter @aluevaaka/scripts upload
         env:
           DATA_BUCKET: ${{ steps.bucket.outputs.name }}
           DATA_PREFIX: data/generated
+
+      - name: Publish dataset metadata
+        env:
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          with open('data/generated/dataset-manifest.json') as f:
+              manifest = json.load(f)
+          print(json.dumps(manifest, indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('### Dataset refresh\n\n')
+              f.write(f'- Version: `{manifest["version"]}`\n')
+              f.write(f'- Areas: `{manifest.get("areaCount", manifest["municipalityCount"])}`\n')
+              f.write(f'- Generated: `{manifest["generatedAt"]}`\n')
+              f.write(f'- Quality warnings: `{len(manifest.get("qualityWarnings", []))}`\n')
+              for key, value in manifest.get('metricCoverage', {}).items():
+                  f.write(f'- `{key}` coverage: `{value:.1%}`\n')
+          PY
 
       - name: Save dataset as artifact
         uses: actions/upload-artifact@v4

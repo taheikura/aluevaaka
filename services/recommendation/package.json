@@ -23,6 +23,7 @@
     "@aluevaaka/data-model": "workspace:*",
     "@aluevaaka/schemas": "workspace:*",
     "@aluevaaka/scoring": "workspace:*",
+    "@aws-sdk/client-cloudwatch": "^3.1101.0",
     "@aws-sdk/client-s3": "^3.600.0",
     "zod": "^3.23.0"
   },

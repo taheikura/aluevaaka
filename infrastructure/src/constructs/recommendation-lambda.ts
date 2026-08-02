@@ -3,6 +3,7 @@ import * as url from 'node:url';
 import * as cdk from 'aws-cdk-lib';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as actions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
@@ -72,6 +73,7 @@ export class RecommendationLambda extends Construct {
         DATA_PREFIX: config.dataPrefix,
         ALLOWED_ORIGINS: frontendOrigin,
         SERVICE_VERSION: process.env.SERVICE_VERSION ?? 'local',
+        ENVIRONMENT: envName,
         NODE_OPTIONS: '--enable-source-maps',
       },
       // No VPC — avoids NAT Gateway cost per the design document
@@ -79,6 +81,13 @@ export class RecommendationLambda extends Construct {
 
     // Grant Lambda read access to the data bucket
     storage.grantDataRead(this.fn);
+    this.fn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['cloudwatch:PutMetricData'],
+        resources: ['*'],
+        conditions: { StringEquals: { 'cloudwatch:namespace': 'Aluevaaka/Recommendation' } },
+      }),
+    );
 
     // Lambda Function URL — public, no auth (recommendations are not sensitive)
     this.functionUrl = this.fn.addFunctionUrl({
