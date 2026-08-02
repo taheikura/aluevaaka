@@ -6,8 +6,8 @@ export function AboutPage() {
       <section>
         <h2>Mikä tämä on?</h2>
         <p>
-          Aluevaaka on kuntasuosituspalvelu Suomeen muuttoa tai asumispaikan vaihtoa harkitseville.
-          Se yhdistää avoimia tilastoaineistoja käyttäjän valitsemiin painotuksiin ja palauttaa
+          Aluevaaka auttaa vertailemaan pääkaupunkiseudun asuinalueita eri elämäntilanteisiin. Se
+          yhdistää avoimia tilastoaineistoja käyttäjän valitsemiin painotuksiin ja palauttaa
           selitettyjä suosituksia.
         </p>
       </section>

@@ -238,13 +238,17 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
         ) as Preferences);
 
   const results: RecommendationResult[] = [];
+  const excluded: MunicipalityBase[] = [];
 
   for (const muni of municipalities) {
     const m = metricsById.get(muni.id);
     if (!m) continue;
 
     // Apply hard constraints first
-    if (!passesConstraints(m, constraints)) continue;
+    if (!passesConstraints(m, constraints)) {
+      excluded.push(muni);
+      continue;
+    }
 
     const categoryScores: CategoryScores = {
       housingAffordability: scoreHousing(m, ranges) ?? undefined,
@@ -288,5 +292,17 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
     });
   }
 
-  return results.sort((a, b) => b.score - a.score).slice(0, limit);
+  const ranked = results.sort((a, b) => b.score - a.score);
+  if (ranked.length > 0 || excluded.length === 0) return ranked.slice(0, limit);
+
+  const relaxed = rankMunicipalities({ ...input, constraints: undefined });
+  return relaxed
+    .map((result) => ({
+      ...result,
+      tradeoffs: [
+        'Pakolliset ehdot eivät täyttyneet – tulos on paras saatavilla oleva vaihtoehto.',
+        ...result.tradeoffs,
+      ],
+    }))
+    .slice(0, limit);
 }

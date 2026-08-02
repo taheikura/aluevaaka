@@ -28,7 +28,7 @@ export function ResultsPage() {
   return (
     <div className="results-page">
       <div className="results-header">
-        <h1>Suositellut kunnat</h1>
+        <h1>Sinulle sopivimmat alueet</h1>
         <p className="dataset-version">
           Aineisto: <time dateTime={datasetVersion}>{datasetVersion}</time>
         </p>
@@ -38,14 +38,16 @@ export function ResultsPage() {
       </div>
 
       {results.length === 0 ? (
-        <p role="status">Yksikään kunta ei täyttänyt antamiasi ehtoja. Löysää rajoituksia.</p>
+        <p role="status">
+          Ehdot olivat liian tiukat. Näytämme seuraavaksi parhaat alueet ilman pakollisia ehtoja.
+        </p>
       ) : (
         <>
           <section aria-label="Karttanäkymä" className="map-section">
             <ResultMap results={results} />
           </section>
 
-          <section aria-label="Kuntalistaus" className="results-list">
+          <section aria-label="Aluelistaus" className="results-list">
             {results.map((result, i) => (
               <ResultCard key={result.municipalityId} result={result} rank={i + 1} />
             ))}

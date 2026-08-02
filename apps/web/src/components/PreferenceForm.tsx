@@ -10,7 +10,7 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
   {
     key: 'housingAffordability',
     label: 'Asumisen hinta',
-    description: 'Vuokra- ja ostotaso suhteessa muihin kuntiin',
+    description: 'Vuokra- ja ostotaso suhteessa muihin pääkaupunkiseudun alueisiin',
   },
   {
     key: 'healthcareAccess',
@@ -112,7 +112,8 @@ export function PreferenceForm({ onSubmit, isLoading }: Props) {
       <fieldset>
         <legend>Pakolliset ehdot (valinnainen)</legend>
         <p className="form-hint">
-          Kunnat, jotka eivät täytä ehtoja, poistetaan tuloksista kokonaan.
+          Alueet, jotka eivät täytä ehtoja, poistetaan tuloksista kokonaan. Ilman ehtoja näet
+          parhaat saatavilla olevat vaihtoehdot.
         </p>
 
         <div className="constraint-row">
