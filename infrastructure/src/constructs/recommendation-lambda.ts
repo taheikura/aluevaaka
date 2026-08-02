@@ -59,7 +59,7 @@ export class RecommendationLambda extends Construct {
       // The bundle is built by `pnpm build` in services/recommendation
       // and output to services/recommendation/bundle/
       code: lambda.Code.fromAsset(
-        path.resolve(__dirname, '../../../../services/recommendation/bundle'),
+        path.resolve(__dirname, '../../../services/recommendation/bundle'),
       ),
       handler: 'index.handler',
       runtime: lambda.Runtime.NODEJS_22_X,
