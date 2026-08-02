@@ -29,6 +29,7 @@ jobs:
   setup:
     name: Resolve environment
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'development' }}
     outputs:
       env_name: ${{ steps.resolve.outputs.env_name }}
       aws_role_arn: ${{ steps.resolve.outputs.aws_role_arn }}
