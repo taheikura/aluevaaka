@@ -12,7 +12,10 @@ import {
   RecommendationResponseSchema,
 } from '@aluevaaka/schemas';
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
+const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').replace(
+  /\/$/,
+  '',
+);
 
 async function fetchApi<T>(
   path: string,

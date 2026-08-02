@@ -49,7 +49,12 @@ const server = http.createServer(async (request, response) => {
       body: JSON.stringify(event),
     });
     const invocation = await lambdaResponse.json();
-    const headers = invocation.headers ?? { 'content-type': 'application/json' };
+    const headers = {
+      ...(invocation.headers ?? { 'content-type': 'application/json' }),
+      'access-control-allow-origin': request.headers.origin ?? 'http://localhost:8080',
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'Content-Type',
+    };
     response.writeHead(invocation.statusCode ?? 502, headers);
     response.end(invocation.body ?? '');
   } catch (error) {

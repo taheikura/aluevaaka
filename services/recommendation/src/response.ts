@@ -33,17 +33,19 @@ export function corsHeaders(origin: string | undefined): Record<string, string> 
 }
 
 export function ok(body: unknown, origin?: string): HandlerResponse {
+  void origin;
   return {
     statusCode: 200,
-    headers: { ...BASE_HEADERS, ...corsHeaders(origin) },
+    headers: BASE_HEADERS,
     body: JSON.stringify(body),
   };
 }
 
 export function error(statusCode: number, payload: ApiError, origin?: string): HandlerResponse {
+  void origin;
   return {
     statusCode,
-    headers: { ...BASE_HEADERS, ...corsHeaders(origin) },
+    headers: BASE_HEADERS,
     body: JSON.stringify(payload),
   };
 }
@@ -51,7 +53,7 @@ export function error(statusCode: number, payload: ApiError, origin?: string): H
 export function noContent(origin?: string): HandlerResponse {
   return {
     statusCode: 204,
-    headers: { ...corsHeaders(origin) },
+    headers: corsHeaders(origin),
     body: '',
   };
 }
