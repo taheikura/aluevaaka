@@ -1,5 +1,4 @@
 import { Duration } from 'aws-cdk-lib';
-import * as budgets from 'aws-cdk-lib/aws-budgets';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import { Construct } from 'constructs';
 import type { EnvConfig } from '../config.js';
@@ -21,7 +20,7 @@ export class Observability extends Construct {
     super(scope, id);
 
     const { config, lambda } = props;
-    const { envName, budgetAlertUsd, alertEmail } = config;
+    const { envName } = config;
     const fn = lambda.fn;
 
     // ---------------------------------------------------------------------------
@@ -68,40 +67,5 @@ export class Observability extends Construct {
       }) as cloudwatch.IWidget,
     );
 
-    // ---------------------------------------------------------------------------
-    // AWS Budgets
-    // ---------------------------------------------------------------------------
-
-    new budgets.CfnBudget(this, 'MonthlyBudget', {
-      budget: {
-        budgetName: `aluevaaka-${envName}-monthly`,
-        budgetType: 'COST',
-        timeUnit: 'MONTHLY',
-        budgetLimit: {
-          amount: budgetAlertUsd,
-          unit: 'USD',
-        },
-      },
-      notificationsWithSubscribers: [
-        {
-          notification: {
-            notificationType: 'ACTUAL',
-            comparisonOperator: 'GREATER_THAN',
-            threshold: 80,
-            thresholdType: 'PERCENTAGE',
-          },
-          subscribers: [{ subscriptionType: 'EMAIL', address: alertEmail }],
-        },
-        {
-          notification: {
-            notificationType: 'FORECASTED',
-            comparisonOperator: 'GREATER_THAN',
-            threshold: 100,
-            thresholdType: 'PERCENTAGE',
-          },
-          subscribers: [{ subscriptionType: 'EMAIL', address: alertEmail }],
-        },
-      ],
-    });
   }
 }
