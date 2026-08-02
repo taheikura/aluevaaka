@@ -12,6 +12,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { DatasetManifest, MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
+import { calculateGridMetrics, generateGridCells } from './grid.js';
 import { log } from './lib/logger.js';
 import {
   buildReport,
@@ -23,13 +24,8 @@ import {
   checkValidCoordinates,
 } from './lib/quality.js';
 import { fetchCapitalAreas } from './sources/capital-areas.js';
-import { fetchHousingPrices } from './sources/housing.js';
-import {
-  fetchMedianIncome,
-  fetchNetMigration,
-  fetchPopulation,
-  fetchUnemploymentRate,
-} from './sources/statistics.js';
+import { fetchPointsOfInterest } from './sources/points-of-interest.js';
+import { fetchPostalHousingPrices } from './sources/postal-housing.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const OUTPUT_DIR = join(__dirname, '../../data/generated');
@@ -40,70 +36,40 @@ export async function generate(): Promise<void> {
   // -------------------------------------------------------------------------
   // 1. Fetch all sources in parallel where safe to do so
   // -------------------------------------------------------------------------
-  const [
-    areaResult,
-    populationResult,
-    incomeResult,
-    unemploymentResult,
-    migrationResult,
-    housingResult,
-  ] = await Promise.all([
+  const [areaResult, housingResult, pointsResult] = await Promise.all([
     fetchCapitalAreas(),
-    fetchPopulation(),
-    fetchMedianIncome(),
-    fetchUnemploymentRate(),
-    fetchNetMigration(),
-    fetchHousingPrices(),
+    fetchPostalHousingPrices(),
+    fetchPointsOfInterest(),
   ]);
 
-  const provenances = [
-    areaResult.provenance,
-    populationResult.provenance,
-    incomeResult.provenance,
-    unemploymentResult.provenance,
-    migrationResult.provenance,
-    housingResult.provenance,
-  ];
+  const provenances = [areaResult.provenance, housingResult.provenance, pointsResult.provenance];
 
   // -------------------------------------------------------------------------
   // 2. Build lookup maps for efficient merge
   // -------------------------------------------------------------------------
-  const populationById = new Map(
-    populationResult.records.map((r) => [r.municipalityId, r.population]),
-  );
-  const incomeById = new Map(
-    incomeResult.records.map((r) => [r.municipalityId, r.medianHouseholdIncomeEur]),
-  );
-  const unemploymentById = new Map(
-    unemploymentResult.records.map((r) => [r.municipalityId, r.unemploymentRatePercent]),
-  );
-  const migrationById = new Map(
-    migrationResult.records.map((r) => [r.municipalityId, r.netMigrationPer1000]),
-  );
-  const housingById = new Map(
-    housingResult.records.map((r) => [r.municipalityId, r.housingPricePerM2]),
-  );
-
-  const byMunicipality = (area: MunicipalityBase, records: Map<string, number | undefined>) =>
-    records.get(area.municipalityId ?? area.id);
+  const housingByPostalCode = new Map(housingResult.records.map((r) => [r.postalCode, r]));
+  const housingForArea = (area: MunicipalityBase) =>
+    housingByPostalCode.get(area.postalCode ?? area.id);
 
   // -------------------------------------------------------------------------
   // 3. Merge into typed structures
   // -------------------------------------------------------------------------
-  const municipalities: MunicipalityBase[] = areaResult.municipalities.map((m) => ({
-    ...m,
-    population: byMunicipality(m, populationById) ?? 0,
-  }));
+  const gridCells = generateGridCells(areaResult.municipalities);
 
-  const metrics: MunicipalityMetrics[] = municipalities.map((m) => ({
+  const postalMetrics: MunicipalityMetrics[] = gridCells.map((m) => ({
     id: m.id,
-    housingPricePerM2: byMunicipality(m, housingById),
-    medianHouseholdIncomeEur: byMunicipality(m, incomeById),
-    unemploymentRatePercent: byMunicipality(m, unemploymentById),
-    netMigrationPer1000: byMunicipality(m, migrationById),
+    housingPricePerM2: housingForArea(m)?.housingPricePerM2,
+    housingTransactionCount: housingForArea(m)?.transactionCount,
+    housingDataYear: housingForArea(m)?.dataYear,
     // Fields from future adapters (healthcare, transport, nature) will go here.
     // Until those adapters are built, the fields remain undefined.
     // The scoring engine handles missing data gracefully.
+  }));
+  const distanceMetrics = calculateGridMetrics(gridCells, pointsResult.points);
+  const municipalities: MunicipalityBase[] = gridCells;
+  const metrics: MunicipalityMetrics[] = postalMetrics.map((metric) => ({
+    ...metric,
+    ...(distanceMetrics.find((distance) => distance.id === metric.id) ?? {}),
   }));
 
   // -------------------------------------------------------------------------
@@ -117,12 +83,6 @@ export async function generate(): Promise<void> {
     ),
     checkValidCoordinates(municipalities.map((m) => ({ ...m.coordinates, id: m.id }))),
     checkNumericRange(
-      metrics.map((m) => m.unemploymentRatePercent),
-      0,
-      50,
-      'unemploymentRatePercent',
-    ),
-    checkNumericRange(
       metrics.map((m) => m.housingPricePerM2),
       100,
       20000,
@@ -132,21 +92,6 @@ export async function generate(): Promise<void> {
       metrics.map((m) => m.housingPricePerM2),
       0.6, // up to 60% missing is acceptable — small municipalities have no market data
       'housingPricePerM2',
-    ),
-    checkMissingValueRate(
-      metrics.map((m) => m.unemploymentRatePercent),
-      0.1,
-      'unemploymentRatePercent',
-    ),
-    checkMissingValueRate(
-      metrics.map((m) => m.medianHouseholdIncomeEur),
-      0.1,
-      'medianHouseholdIncomeEur',
-    ),
-    checkMissingValueRate(
-      metrics.map((m) => m.netMigrationPer1000),
-      0.1,
-      'netMigrationPer1000',
     ),
   ];
 
@@ -186,9 +131,12 @@ export async function generate(): Promise<void> {
     areaCount: municipalities.length,
     metricCoverage: {
       housingPricePerM2: coverage(metrics, 'housingPricePerM2'),
-      unemploymentRatePercent: coverage(metrics, 'unemploymentRatePercent'),
-      netMigrationPer1000: coverage(metrics, 'netMigrationPer1000'),
-      medianHouseholdIncomeEur: coverage(metrics, 'medianHouseholdIncomeEur'),
+      distanceToHealthcareKm: coverage(metrics, 'distanceToHealthcareKm'),
+      distanceToTransitKm: coverage(metrics, 'distanceToTransitKm'),
+      distanceToGroceryKm: coverage(metrics, 'distanceToGroceryKm'),
+      distanceToParkKm: coverage(metrics, 'distanceToParkKm'),
+      distanceToSchoolKm: coverage(metrics, 'distanceToSchoolKm'),
+      distanceToLibraryKm: coverage(metrics, 'distanceToLibraryKm'),
     },
     sources: provenances,
     qualityWarnings: report.warnings,

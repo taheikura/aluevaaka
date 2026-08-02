@@ -28,9 +28,12 @@ interface MetricRanges {
   broadbandAvailabilityPercent?: { min: number; max: number };
   forestCoverPercent?: { min: number; max: number };
   distanceToWaterKm?: { min: number; max: number };
-  unemploymentRatePercent?: { min: number; max: number };
-  netMigrationPer1000?: { min: number; max: number };
-  medianHouseholdIncomeEur?: { min: number; max: number };
+  distanceToHealthcareKm?: { min: number; max: number };
+  distanceToTransitKm?: { min: number; max: number };
+  distanceToGroceryKm?: { min: number; max: number };
+  distanceToParkKm?: { min: number; max: number };
+  distanceToSchoolKm?: { min: number; max: number };
+  distanceToLibraryKm?: { min: number; max: number };
 }
 
 /** Build column ranges from the full dataset. Call once on dataset load. */
@@ -53,9 +56,12 @@ export function buildRanges(metrics: MunicipalityMetrics[]): MetricRanges {
   set('broadbandAvailabilityPercent', columnRange(col('broadbandAvailabilityPercent')));
   set('forestCoverPercent', columnRange(col('forestCoverPercent')));
   set('distanceToWaterKm', columnRange(col('distanceToWaterKm')));
-  set('unemploymentRatePercent', columnRange(col('unemploymentRatePercent')));
-  set('netMigrationPer1000', columnRange(col('netMigrationPer1000')));
-  set('medianHouseholdIncomeEur', columnRange(col('medianHouseholdIncomeEur')));
+  set('distanceToHealthcareKm', columnRange(col('distanceToHealthcareKm')));
+  set('distanceToTransitKm', columnRange(col('distanceToTransitKm')));
+  set('distanceToGroceryKm', columnRange(col('distanceToGroceryKm')));
+  set('distanceToParkKm', columnRange(col('distanceToParkKm')));
+  set('distanceToSchoolKm', columnRange(col('distanceToSchoolKm')));
+  set('distanceToLibraryKm', columnRange(col('distanceToLibraryKm')));
 
   return ranges;
 }
@@ -72,13 +78,22 @@ function scoreHousing(m: MunicipalityMetrics, ranges: MetricRanges): number | un
 }
 
 function scoreHealthcare(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
-  const r = ranges.distanceToHealthcareCentreKm;
+  const r = ranges.distanceToHealthcareKm;
   if (!r) return undefined;
-  return normalizeLowerIsBetter(m.distanceToHealthcareCentreKm, r.min, r.max);
+  return normalizeLowerIsBetter(m.distanceToHealthcareKm, r.min, r.max);
 }
 
 function scoreTransport(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const scores: number[] = [];
+
+  if (ranges.distanceToTransitKm) {
+    const s = normalizeLowerIsBetter(
+      m.distanceToTransitKm,
+      ranges.distanceToTransitKm.min,
+      ranges.distanceToTransitKm.max,
+    );
+    if (s !== undefined) scores.push(s);
+  }
 
   if (ranges.distanceToRailKm) {
     const s = normalizeLowerIsBetter(
@@ -103,6 +118,15 @@ function scoreTransport(m: MunicipalityMetrics, ranges: MetricRanges): number | 
 function scoreNature(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const scores: number[] = [];
 
+  if (ranges.distanceToParkKm) {
+    const s = normalizeLowerIsBetter(
+      m.distanceToParkKm,
+      ranges.distanceToParkKm.min,
+      ranges.distanceToParkKm.max,
+    );
+    if (s !== undefined) scores.push(s);
+  }
+
   if (ranges.forestCoverPercent) {
     const s = normalizeHigherIsBetter(
       m.forestCoverPercent,
@@ -123,50 +147,18 @@ function scoreNature(m: MunicipalityMetrics, ranges: MetricRanges): number | und
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
 }
 
-function scoreEconomic(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
-  const scores: number[] = [];
-
-  if (ranges.unemploymentRatePercent) {
-    const s = normalizeLowerIsBetter(
-      m.unemploymentRatePercent,
-      ranges.unemploymentRatePercent.min,
-      ranges.unemploymentRatePercent.max,
-    );
-    if (s !== undefined) scores.push(s);
-  }
-  if (ranges.netMigrationPer1000) {
-    const s = normalizeHigherIsBetter(
-      m.netMigrationPer1000,
-      ranges.netMigrationPer1000.min,
-      ranges.netMigrationPer1000.max,
-    );
-    if (s !== undefined) scores.push(s);
-  }
-  if (ranges.medianHouseholdIncomeEur) {
-    const s = normalizeHigherIsBetter(
-      m.medianHouseholdIncomeEur,
-      ranges.medianHouseholdIncomeEur.min,
-      ranges.medianHouseholdIncomeEur.max,
-    );
-    if (s !== undefined) scores.push(s);
-  }
-
-  return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
-}
-
 // ---------------------------------------------------------------------------
 // Data completeness
 // ---------------------------------------------------------------------------
 
 const EXPECTED_METRICS: (keyof MunicipalityMetrics)[] = [
   'housingPricePerM2',
-  'distanceToHealthcareCentreKm',
-  'distanceToRailKm',
-  'broadbandAvailabilityPercent',
-  'forestCoverPercent',
-  'unemploymentRatePercent',
-  'netMigrationPer1000',
-  'medianHouseholdIncomeEur',
+  'distanceToHealthcareKm',
+  'distanceToTransitKm',
+  'distanceToGroceryKm',
+  'distanceToParkKm',
+  'distanceToSchoolKm',
+  'distanceToLibraryKm',
 ];
 
 function computeCompleteness(m: MunicipalityMetrics): number {
@@ -255,7 +247,7 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       healthcareAccess: scoreHealthcare(m, ranges) ?? undefined,
       transportConnectivity: scoreTransport(m, ranges) ?? undefined,
       natureAndRecreation: scoreNature(m, ranges) ?? undefined,
-      economicOutlook: scoreEconomic(m, ranges) ?? undefined,
+      economicOutlook: undefined,
     };
 
     // Weighted sum — skip categories with no score
@@ -284,6 +276,10 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       name: muni.nameFi,
       region: muni.region,
       coordinates: muni.coordinates,
+      housingPricePerM2: m.housingPricePerM2,
+      housingTransactionCount: m.housingTransactionCount,
+      housingDataYear: m.housingDataYear,
+      h3Index: m.h3Index,
       score,
       categoryScores,
       strengths,

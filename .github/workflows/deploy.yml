@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   PNPM_VERSION: "9"
   AWS_REGION: eu-north-1
 
@@ -55,13 +55,13 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -80,7 +80,7 @@ jobs:
           SERVICE_VERSION: ${{ github.sha }}
 
       - name: Upload Lambda bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/lambda.zip
@@ -96,13 +96,13 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -113,7 +113,7 @@ jobs:
         run: pnpm --filter @aluevaaka/scripts pipeline
 
       - name: Upload generated dataset
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: generated-data-${{ github.sha }}
           path: data/generated/
@@ -132,13 +132,13 @@ jobs:
       id-token: write   # required for OIDC
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -181,7 +181,7 @@ jobs:
           echo "account_id=$ACTUAL_ACCOUNT" >> "$GITHUB_OUTPUT"
 
       - name: Download Lambda bundle (CDK asset)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/
@@ -221,13 +221,13 @@ jobs:
       web_bucket: ${{ steps.get-outputs.outputs.web_bucket }}
       data_bucket: ${{ steps.get-outputs.outputs.data_bucket }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -287,7 +287,7 @@ jobs:
           VITE_API_URL: ${{ steps.get-outputs.outputs.function_url }}
 
       - name: Download Lambda bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/
@@ -299,7 +299,7 @@ jobs:
           echo "Uploading dataset to s3://${{ steps.get-outputs.outputs.data_bucket }}/data/generated/"
         # The actual upload uses the upload script which reads DATA_BUCKET env var
       - name: Download generated dataset artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: generated-data-${{ github.sha }}
           path: data/generated/
