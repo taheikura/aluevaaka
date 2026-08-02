@@ -86,7 +86,7 @@ export function ResultCard({ result, rank }: Props) {
 
       {completenessPct < 90 && (
         <p className="completeness-warning" role="note">
-          Tietojen kattavuus: {completenessPct} % — osa tiedoista puuttuu tältä kunnalta.
+          Tietojen kattavuus: {completenessPct} % — osa tiedoista puuttuu tältä alueelta.
         </p>
       )}
     </article>

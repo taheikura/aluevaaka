@@ -31,20 +31,20 @@ function rows(data: PxWebResponse): Array<{ key: string[]; values: string[] }> {
   });
 
   return data.value.map((value, flatIndex) => {
-    let remainder = flatIndex;
-    const indexes = data.size
-      .map((size) => {
-        const index = remainder % size;
-        remainder = Math.floor(remainder / size);
-        return index;
-      })
-      .reverse();
+    const indexes = data.size.map((size, dimension) => {
+      const stride = data.size.slice(dimension + 1).reduce((product, value) => product * value, 1);
+      return Math.floor(flatIndex / stride) % size;
+    });
 
     return {
       key: indexes.map((index, dimension) => dimensions[dimension]?.[index] ?? ''),
       values: [value === null ? '' : String(value)],
     };
   });
+}
+
+function municipalityCode(value: string): string {
+  return value.startsWith('KU') ? value.slice(2).padStart(3, '0') : value;
 }
 
 async function queryPxWeb(
@@ -79,11 +79,10 @@ export async function fetchPopulation(): Promise<{
   log.info('fetch_population_start');
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
-  // Table: 11re -- Population by municipality and year
-  // https://pxdata.stat.fi:443/PxWeb/api/v1/fi/StatFin/vaerak/statfin_vaerak_pxt_11re.px
+  // Table: 11ra -- Population indicators by municipality and year
   const data = await queryPxWeb('StatFin/vaerak/11ra.px', {
     query: [
-      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'timeperiod_y', selection: { filter: 'item', values: ['2025'] } },
       { code: 'alue_23_20260101', selection: { filter: 'all', values: ['*'] } },
       { code: 'contentscode', selection: { filter: 'item', values: ['vaerak-vaesto'] } },
     ],
@@ -92,7 +91,7 @@ export async function fetchPopulation(): Promise<{
 
   const records: PopulationRecord[] = rows(data)
     .map((row) => ({
-      municipalityId: row.key[1] ?? '',
+      municipalityId: municipalityCode(row.key[1] ?? ''),
       population: parseInt(row.values[0] ?? '0', 10),
     }))
     .filter((r) => r.municipalityId && !Number.isNaN(r.population));
@@ -127,19 +126,19 @@ export async function fetchMedianIncome(): Promise<{
   log.info('fetch_income_start');
   const fetchedAt = new Date().toISOString().slice(0, 10);
 
-  // Table: 11y9 -- Household income by municipality
+  // Table: 14ww -- Income indicators by municipality and year
   const data = await queryPxWeb('StatFin/tjt/14ww.px', {
     query: [
       { code: 'alue_23_20250101', selection: { filter: 'all', values: ['*'] } },
       { code: 'contentscode', selection: { filter: 'item', values: ['hkturaha18_med'] } },
-      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'timeperiod_y', selection: { filter: 'item', values: ['2024'] } },
     ],
     response: { format: 'json-stat2' },
   });
 
   const records: IncomeRecord[] = rows(data)
     .map((row) => ({
-      municipalityId: row.key[1] ?? '',
+      municipalityId: municipalityCode(row.key[0] ?? ''),
       medianHouseholdIncomeEur: parseFloat(row.values[0] ?? '0'),
     }))
     .filter((r) => r.municipalityId && !Number.isNaN(r.medianHouseholdIncomeEur));
@@ -178,7 +177,7 @@ export async function fetchUnemploymentRate(): Promise<{
   const data = await queryPxWeb('StatFin/tyokay/115x.px', {
     query: [
       { code: 'alue_23_20250101', selection: { filter: 'all', values: ['*'] } },
-      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'timeperiod_y', selection: { filter: 'item', values: ['2024'] } },
       { code: 'contentscode', selection: { filter: 'item', values: ['tyokay-tyottomyysaste'] } },
     ],
     response: { format: 'json-stat2' },
@@ -186,7 +185,7 @@ export async function fetchUnemploymentRate(): Promise<{
 
   const records: UnemploymentRecord[] = rows(data)
     .map((row) => ({
-      municipalityId: row.key[1] ?? '0',
+      municipalityId: municipalityCode(row.key[0] ?? ''),
       unemploymentRatePercent: parseFloat(row.values[0] ?? '0'),
     }))
     .filter((r) => r.municipalityId && !Number.isNaN(r.unemploymentRatePercent));
@@ -223,7 +222,7 @@ export async function fetchNetMigration(): Promise<{
 
   const data = await queryPxWeb('StatFin/muutl/11ae.px', {
     query: [
-      { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+      { code: 'timeperiod_y', selection: { filter: 'item', values: ['2025'] } },
       { code: 'alue_23_20260101', selection: { filter: 'all', values: ['*'] } },
       { code: 'contentscode', selection: { filter: 'item', values: ['muutl-vm43_netto'] } },
     ],
@@ -232,7 +231,7 @@ export async function fetchNetMigration(): Promise<{
 
   const records: MigrationRecord[] = rows(data)
     .map((row) => ({
-      municipalityId: row.key[1] ?? '',
+      municipalityId: municipalityCode(row.key[1] ?? ''),
       netMigrationPer1000: parseFloat(row.values[0] ?? '0'),
     }))
     .filter((r) => r.municipalityId && !Number.isNaN(r.netMigrationPer1000));

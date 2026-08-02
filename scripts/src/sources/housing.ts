@@ -59,14 +59,12 @@ export async function fetchHousingPrices(): Promise<{
 
   const records: HousingRecord[] = data.value
     .map((value, flatIndex) => {
-      let remainder = flatIndex;
-      const indexes = data.size
-        .map((size) => {
-          const index = remainder % size;
-          remainder = Math.floor(remainder / size);
-          return index;
-        })
-        .reverse();
+      const indexes = data.size.map((size, dimension) => {
+        const stride = data.size
+          .slice(dimension + 1)
+          .reduce((product, value) => product * value, 1);
+        return Math.floor(flatIndex / stride) % size;
+      });
       const price = value ?? Number.NaN;
       return {
         municipalityId: dimensions[1]?.[indexes[1] ?? 0] ?? '',

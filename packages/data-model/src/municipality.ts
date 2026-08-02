@@ -1,5 +1,5 @@
 /**
- * Core municipality data model.
+ * Core area data model.
  *
  * These types represent the shape of data stored in generated S3 datasets.
  * Keep this pure — no AWS SDK, no Zod, no runtime deps.
@@ -20,10 +20,13 @@ export interface MunicipalityCoordinates {
 
 export interface MunicipalityBase {
   id: MunicipalityId;
-  /** Official Finnish name */
+  /** Parent municipality code used to join municipality-level source data. */
+  municipalityId?: MunicipalityId;
+  /** Official or commonly used Finnish area name */
   nameFi: string;
   /** Official Swedish name, if available */
   nameSv?: string;
+  /** Parent city for the capital-area MVP */
   region: string;
   coordinates: MunicipalityCoordinates;
   /** Population from latest available census */

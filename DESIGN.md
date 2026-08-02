@@ -8,7 +8,16 @@
 
 Aluevaaka is an explainable municipality recommendation platform for Finland. It combines Finnish open datasets with user preferences to recommend municipalities where a person could live, work, or establish a business.
 
-The MVP focuses on relocation. A user provides preferences such as housing affordability, healthcare access, transport connections, nature, services, and economic outlook. Aluevaaka returns ranked municipalities, category scores, explanations, trade-offs, data freshness, and a map-based comparison.
+The MVP focuses on relocation within the Helsinki metropolitan area. A user provides preferences such as housing affordability, healthcare access, transport connections, nature, services, and economic outlook. Aluevaaka returns ranked neighbourhoods across Helsinki, Espoo, Vantaa, and Kauniainen, with category scores, explanations, trade-offs, data freshness, and a map-based comparison.
+
+The initial geographic scope is deliberately limited to four cities:
+
+- Helsinki
+- Espoo
+- Vantaa
+- Kauniainen
+
+This is a better MVP boundary than attempting to rank every Finnish municipality. The product can validate whether the recommendation experience is useful before the data model is expanded to other regions.
 
 The MVP is intentionally designed for very low operating cost. It uses static frontend assets and generated datasets where possible, serverless compute for dynamic recommendations, and no continuously running servers or databases.
 
@@ -61,11 +70,25 @@ These capabilities can be added after the recommendation workflow and data quali
 4. The browser submits the recommendation request to a Lambda Function URL.
 5. Lambda loads the current generated dataset from S3.
 6. Lambda validates the request and calculates municipality scores.
-7. Lambda returns ranked municipalities and score explanations.
+7. Lambda returns ranked neighbourhoods and score explanations.
 8. The frontend displays results on a map, in a ranked list, and in a comparison view.
 9. The user can inspect the source and freshness information for each result.
 
-### 4.2 MVP preference categories
+### 4.2 MVP geographic model
+
+The recommendation unit is a neighbourhood or statistical area, not a whole municipality. Every area belongs to one of the four MVP cities and has a stable geographic identifier.
+
+The MVP should use a curated, documented area boundary dataset. It should not infer neighbourhood names from arbitrary map coordinates. Each area record should include:
+
+- Area identifier and display name.
+- Parent city: Helsinki, Espoo, Vantaa, or Kauniainen.
+- Representative coordinates or polygon geometry.
+- Source and publication date.
+- Whether the area is a residential area, statistical area, or another defined unit.
+
+If neighbourhood-level data is unavailable for a metric, the product should show the limitation rather than silently presenting municipality-level data as neighbourhood data.
+
+### 4.3 MVP preference categories
 
 The first version should use a limited number of categories with reliable data:
 
@@ -85,7 +108,8 @@ The system should support both:
 
 Each result should include:
 
-- Municipality name and identifier.
+- Neighbourhood name and identifier.
+- Parent city.
 - Overall match score.
 - Category-level scores.
 - Positive factors.
@@ -185,17 +209,17 @@ API Gateway should be introduced when the product needs multiple versioned route
 
 ### 7.1 Initial data lifecycle
 
-The MVP uses batch-generated data rather than real-time ingestion:
+The MVP uses batch-generated data rather than real-time ingestion. The data refresh is separate from a normal application deployment:
 
-1. A script downloads selected open datasets.
+1. A scheduled or manually triggered GitHub Actions workflow downloads selected open datasets.
 2. The script validates and normalizes source records.
 3. Derived indicators are calculated.
 4. Generated JSON files and metadata are produced.
-5. CI uploads the generated data to S3.
-6. The deployment records the dataset version.
-7. Lambda reads the current dataset from S3.
+5. The workflow uploads the generated data to the development or production S3 data bucket.
+6. The workflow calls the deployed Lambda health endpoint and verifies the new manifest is available.
+7. Lambda reads the current dataset from S3 on the next request and refreshes its warm-cache entry when the manifest version changes.
 
-The first implementation can use a manually triggered GitHub Actions workflow. A scheduled workflow can be added later when update frequency is understood.
+The deployment workflow may generate and upload a dataset as part of a deployment, while `data-pipeline.yml` independently refreshes data weekly or manually. Both workflows must target the same environment bucket. If a source fails, the last validated dataset remains in S3 and the pipeline must not overwrite it with incomplete output.
 
 ### 7.2 Suggested generated files
 
@@ -328,8 +352,9 @@ Example response shape:
   "datasetVersion": "2026-07-30",
   "results": [
     {
-      "municipalityId": "example-id",
-      "name": "Example municipality",
+          "neighbourhoodId": "example-area-id",
+          "name": "Example neighbourhood",
+          "city": "Helsinki",
       "score": 0.82,
       "categoryScores": {
         "housingAffordability": 0.9,
