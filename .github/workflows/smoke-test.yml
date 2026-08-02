@@ -60,6 +60,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ inputs.environment == 'development' && secrets.AWS_ACCOUNT_ID_DEV || secrets.AWS_ACCOUNT_ID_PROD }}:role/OrganizationAccountAccessRole
           role-chaining: true
+          role-skip-session-tagging: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Resolve Function URL from stack outputs
