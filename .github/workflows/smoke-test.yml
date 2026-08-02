@@ -51,7 +51,15 @@ jobs:
         if: ${{ !inputs.function_url }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_DEV }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume target account role
+        if: ${{ !inputs.function_url }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.environment == 'development' && secrets.AWS_ACCOUNT_ID_DEV || secrets.AWS_ACCOUNT_ID_PROD }}:role/OrganizationAccountAccessRole
+          role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Resolve Function URL from stack outputs
