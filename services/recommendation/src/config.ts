@@ -24,6 +24,9 @@ export const config = {
   /** Deployed service version, injected by CI */
   serviceVersion: process.env.SERVICE_VERSION ?? 'unknown',
 
+  /** Deployment environment used as a CloudWatch metric dimension */
+  environment: process.env.ENVIRONMENT ?? 'development',
+
   /** Maximum request body size in bytes (100 KB) */
   maxBodyBytes: 100 * 1024,
 } as const;

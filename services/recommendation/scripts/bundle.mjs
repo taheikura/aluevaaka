@@ -12,6 +12,7 @@ import { build } from 'esbuild';
 const __dirname = new URL('.', import.meta.url).pathname;
 const root = join(__dirname, '..');
 const bundleDir = join(root, 'bundle');
+const isProduction = process.env.NODE_ENV === 'production';
 
 if (existsSync(bundleDir)) {
   rmSync(bundleDir, { recursive: true });
@@ -22,14 +23,14 @@ await build({
   entryPoints: [join(root, 'dist', 'index.js')],
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  target: 'node24',
   format: 'esm',
   outfile: join(bundleDir, 'index.mjs'),
   // AWS SDK v3 is available in the Lambda runtime — exclude it to keep the
   // bundle small. Remove this line if you need a specific version pinned.
   external: ['@aws-sdk/*'],
-  minify: true,
-  sourcemap: false,
+  minify: isProduction,
+  sourcemap: isProduction ? 'inline' : true,
   banner: {
     // ESM Lambda handler shim — Lambda looks for handler on the export object
     js: '',

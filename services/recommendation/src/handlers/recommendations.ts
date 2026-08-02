@@ -3,6 +3,7 @@ import { rankMunicipalities } from '@aluevaaka/scoring';
 import { config } from '../config.js';
 import { loadDataset } from '../dataset.js';
 import { logger } from '../logger.js';
+import { publishRecommendationMetric } from '../metrics.js';
 import { error, type HandlerResponse, ok } from '../response.js';
 
 export async function handleRecommendations(
@@ -64,6 +65,7 @@ export async function handleRecommendations(
     resultCount: results.length,
     datasetVersion: dataset.manifest.version,
   });
+  await publishRecommendationMetric();
 
   const body: RecommendationResponse = {
     datasetVersion: dataset.manifest.version,

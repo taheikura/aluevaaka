@@ -183,6 +183,13 @@ export async function generate(): Promise<void> {
     version,
     generatedAt: new Date().toISOString(),
     municipalityCount: municipalities.length,
+    areaCount: municipalities.length,
+    metricCoverage: {
+      housingPricePerM2: coverage(metrics, 'housingPricePerM2'),
+      unemploymentRatePercent: coverage(metrics, 'unemploymentRatePercent'),
+      netMigrationPer1000: coverage(metrics, 'netMigrationPer1000'),
+      medianHouseholdIncomeEur: coverage(metrics, 'medianHouseholdIncomeEur'),
+    },
     sources: provenances,
     qualityWarnings: report.warnings,
   };
@@ -199,4 +206,9 @@ export async function generate(): Promise<void> {
     outputDir: OUTPUT_DIR,
     warnings: report.warnings.length,
   });
+}
+
+function coverage(metrics: MunicipalityMetrics[], key: keyof MunicipalityMetrics): number {
+  if (metrics.length === 0) return 0;
+  return metrics.filter((metric) => metric[key] !== undefined).length / metrics.length;
 }

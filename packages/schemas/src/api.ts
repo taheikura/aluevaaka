@@ -66,6 +66,10 @@ export const HealthResponseSchema = z.object({
   serviceVersion: z.string(),
   datasetVersion: z.string().optional(),
   datasetStatus: z.enum(['available', 'stale', 'unavailable']),
+  municipalityCount: z.number().int().nonnegative().optional(),
+  areaCount: z.number().int().nonnegative().optional(),
+  metricCoverage: z.record(z.number().min(0).max(1)).optional(),
+  qualityWarnings: z.array(z.string()).optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

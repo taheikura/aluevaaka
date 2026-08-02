@@ -105,6 +105,9 @@ jobs:
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           echo "dataset_status=$DATASET_STATUS" >> "$GITHUB_OUTPUT"
           echo "dataset_version=$DATASET_VERSION" >> "$GITHUB_OUTPUT"
+          echo "area_count=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('areaCount',''))")" >> "$GITHUB_OUTPUT"
+          echo "metric_coverage=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin).get('metricCoverage',{}), separators=(',', ':')))" )" >> "$GITHUB_OUTPUT"
+          echo "quality_warnings=$(echo "$RESPONSE" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('qualityWarnings',[])))")" >> "$GITHUB_OUTPUT"
 
           if [ "$STATUS" != "ok" ] && [ "$STATUS" != "degraded" ]; then
             echo "FAIL: health status is '$STATUS'"
@@ -218,4 +221,7 @@ jobs:
           echo "| Function URL | \`${{ steps.url.outputs.value }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Health status | \`${{ steps.health.outputs.status }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Dataset | \`${{ steps.health.outputs.dataset_version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Areas | \`${{ steps.health.outputs.area_count }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric coverage | \`${{ steps.health.outputs.metric_coverage }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Quality warnings | \`${{ steps.health.outputs.quality_warnings }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Results returned | \`${{ steps.recommend.outputs.result_count }}\` |" >> "$GITHUB_STEP_SUMMARY"

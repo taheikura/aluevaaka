@@ -1,5 +1,7 @@
 import { Duration } from 'aws-cdk-lib';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as cloudwatch_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import type * as sns from 'aws-cdk-lib/aws-sns';
 import { Construct } from 'constructs';
 import type { EnvConfig } from '../config.js';
 import type { RecommendationLambda } from './recommendation-lambda.js';
@@ -50,6 +52,48 @@ export class Observability extends Construct {
         ],
         width: 8,
       }) as cloudwatch.IWidget,
+    );
+
+    const customMetric = (name: string, unit: cloudwatch.Unit = cloudwatch.Unit.COUNT) =>
+      new cloudwatch.Metric({
+        namespace: 'Aluevaaka/Recommendation',
+        metricName: name,
+        dimensionsMap: { Environment: envName },
+        period: Duration.minutes(5),
+        statistic: 'Sum',
+        unit,
+      });
+
+    dashboard.addWidgets(
+      new cloudwatch.GraphWidget({
+        title: 'Dataset health',
+        left: [
+          customMetric('DatasetAreaCount'),
+          customMetric('DatasetAgeHours'),
+          customMetric('DatasetQualityWarningCount'),
+          customMetric('DatasetUnavailableCount'),
+        ],
+        width: 12,
+      }) as cloudwatch.IWidget,
+      new cloudwatch.GraphWidget({
+        title: 'Recommendation traffic',
+        left: [customMetric('RecommendationRequestCount')],
+        width: 12,
+      }) as cloudwatch.IWidget,
+    );
+
+    const datasetAgeAlarm = new cloudwatch.Alarm(this, 'DatasetAgeAlarm', {
+      alarmName: `aluevaaka-${envName}-dataset-age`,
+      alarmDescription: 'Dataset has not been refreshed recently',
+      metric: customMetric('DatasetAgeHours'),
+      threshold: 24 * 8,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.BREACHING,
+    });
+    datasetAgeAlarm.addAlarmAction(
+      new cloudwatch_actions.SnsAction(
+        scope.node.findChild('RecommendationLambda').node.findChild('AlarmTopic') as sns.Topic,
+      ),
     );
 
     dashboard.addWidgets(

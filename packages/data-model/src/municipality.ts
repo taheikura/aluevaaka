@@ -108,6 +108,10 @@ export interface DatasetManifest {
   version: string;
   generatedAt: ISODateString;
   municipalityCount: number;
+  /** Number of generated capital-area postal/statistical areas. */
+  areaCount?: number;
+  /** Fraction of generated areas containing each metric, from 0 to 1. */
+  metricCoverage?: Record<string, number>;
   sources: DataSourceProvenance[];
   /** Any quality warnings produced by the pipeline */
   qualityWarnings: string[];
