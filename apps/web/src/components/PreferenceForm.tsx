@@ -2,7 +2,13 @@ import type { Preferences, RecommendationRequest } from '@aluevaaka/schemas';
 import { type FormEvent, useState } from 'react';
 
 interface Props {
-  onSubmit: (request: RecommendationRequest) => void;
+  value?: {
+    preferences: Preferences;
+    maxHousingCost: string;
+    maxHealthcareKm: string;
+  };
+  onChange?: (request: RecommendationRequest) => void;
+  onSubmit?: (request: RecommendationRequest) => void;
   isLoading: boolean;
 }
 
@@ -48,13 +54,21 @@ const DEFAULT_PREFERENCES: Preferences = {
   services: 0,
 };
 
-export function PreferenceForm({ onSubmit, isLoading }: Props) {
-  const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
-  const [maxHousingCost, setMaxHousingCost] = useState('');
-  const [maxHealthcareKm, setMaxHealthcareKm] = useState('');
+export function PreferenceForm({ value, onChange, onSubmit, isLoading }: Props) {
+  const [localPreferences, setLocalPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
+  const [localMaxHousingCost, setLocalMaxHousingCost] = useState('');
+  const [localMaxHealthcareKm, setLocalMaxHealthcareKm] = useState('');
+  const preferences = value?.preferences ?? localPreferences;
+  const maxHousingCost = value?.maxHousingCost ?? localMaxHousingCost;
+  const maxHealthcareKm = value?.maxHealthcareKm ?? localMaxHealthcareKm;
 
   function handleSlider(key: keyof Preferences, value: number) {
-    setPreferences((prev) => ({ ...prev, [key]: value / 100 }));
+    const next = { ...preferences, [key]: value / 100 };
+    if (onChange) {
+      onChange({ preferences: next, constraints: {}, limit: 10 });
+    } else {
+      setLocalPreferences(next);
+    }
   }
 
   function handleSubmit(e: FormEvent) {
@@ -68,7 +82,7 @@ export function PreferenceForm({ onSubmit, isLoading }: Props) {
       },
       limit: 10,
     };
-    onSubmit(request);
+    (onChange ?? onSubmit)?.(request);
   }
 
   const anyWeightSet = Object.values(preferences).some((v) => v > 0);
@@ -126,7 +140,15 @@ export function PreferenceForm({ onSubmit, isLoading }: Props) {
             step={50}
             placeholder="esim. 900"
             value={maxHousingCost}
-            onChange={(e) => setMaxHousingCost(e.target.value)}
+            onChange={(e) => {
+              if (onChange)
+                onChange({
+                  preferences,
+                  constraints: { maximumHousingCostEur: Number(e.target.value) },
+                  limit: 10,
+                });
+              else setLocalMaxHousingCost(e.target.value);
+            }}
           />
         </div>
 
@@ -140,7 +162,15 @@ export function PreferenceForm({ onSubmit, isLoading }: Props) {
             step={5}
             placeholder="esim. 30"
             value={maxHealthcareKm}
-            onChange={(e) => setMaxHealthcareKm(e.target.value)}
+            onChange={(e) => {
+              if (onChange)
+                onChange({
+                  preferences,
+                  constraints: { maximumDistanceToHealthcareKm: Number(e.target.value) },
+                  limit: 10,
+                });
+              else setLocalMaxHealthcareKm(e.target.value);
+            }}
           />
         </div>
       </fieldset>
@@ -151,7 +181,7 @@ export function PreferenceForm({ onSubmit, isLoading }: Props) {
         aria-busy={isLoading}
         className="submit-button"
       >
-        {isLoading ? 'Haetaan…' : 'Etsi sopivat kunnat'}
+        {isLoading ? 'Päivitetään…' : 'Etsi sopivat alueet'}
       </button>
 
       {!anyWeightSet && (
