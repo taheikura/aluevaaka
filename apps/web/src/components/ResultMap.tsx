@@ -48,9 +48,9 @@ export function ResultMap({ results }: Props) {
 
     const map = mapRef.current;
 
-    // Clear old markers
+    // Clear old markers and score overlays
     map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) map.removeLayer(layer);
+      if (layer instanceof L.Marker || layer instanceof L.CircleMarker) map.removeLayer(layer);
     });
 
     if (results.length === 0) return;
@@ -59,13 +59,19 @@ export function ResultMap({ results }: Props) {
 
     results.forEach((r, i) => {
       const { lat, lng } = r.coordinates;
-      const score = Math.round(r.score * 100);
-
-      const marker = L.marker([lat, lng]).addTo(map);
+      const score = Math.max(0, Math.min(1, r.score));
+      const hue = Math.round(score * 120);
+      const marker = L.circleMarker([lat, lng], {
+        radius: 16,
+        color: `hsl(${hue} 75% 35%)`,
+        fillColor: `hsl(${hue} 85% 50%)`,
+        fillOpacity: 0.45,
+        weight: 2,
+      }).addTo(map);
       marker.bindPopup(
         `<strong>${i + 1}. ${r.name}</strong><br/>` +
           `${r.region}<br/>` +
-          `Pistemäärä: ${score}/100`,
+          `Sopivuus: ${Math.round(score * 100)}/100`,
       );
       bounds.extend([lat, lng]);
     });
@@ -91,7 +97,7 @@ export function ResultMap({ results }: Props) {
       className="result-map"
       style={{ height: '400px', width: '100%' }}
       role="region"
-      aria-label="Suosituskartta"
+      aria-label="Alueiden sopivuuskartta"
     />
   );
 }
