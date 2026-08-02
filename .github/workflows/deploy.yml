@@ -165,6 +165,19 @@ jobs:
           role-chaining: true
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify target account
+        id: target-account
+        run: |
+          ACTUAL_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          EXPECTED_ACCOUNT="${{ needs.setup.outputs.aws_account_id }}"
+          echo "AWS caller account: $ACTUAL_ACCOUNT"
+          echo "Expected target account: $EXPECTED_ACCOUNT"
+          if [ "$ACTUAL_ACCOUNT" != "$EXPECTED_ACCOUNT" ]; then
+            echo "ERROR: AWS credentials are not for the selected target account"
+            exit 1
+          fi
+          echo "account_id=$ACTUAL_ACCOUNT" >> "$GITHUB_OUTPUT"
+
       - name: Download Lambda bundle (CDK asset)
         uses: actions/download-artifact@v4
         with:
@@ -186,7 +199,7 @@ jobs:
             --context env=${{ needs.setup.outputs.env_name }} \
             --context alertEmail=${{ secrets.ALERT_EMAIL }}
         env:
-          CDK_DEFAULT_ACCOUNT: ${{ needs.setup.outputs.aws_account_id }}
+          CDK_DEFAULT_ACCOUNT: ${{ steps.target-account.outputs.account_id }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
   # ---------------------------------------------------------------------------
