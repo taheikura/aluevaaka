@@ -164,6 +164,7 @@ jobs:
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
+          role-skip-session-tagging: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify target account
@@ -244,6 +245,7 @@ jobs:
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
+          role-skip-session-tagging: true
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Read CDK stack outputs
