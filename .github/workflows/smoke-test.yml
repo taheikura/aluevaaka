@@ -136,11 +136,15 @@ jobs:
             "limit": 3
           }'
 
+          FUNCTION_URL="${{ steps.url.outputs.value }}"
+          RECOMMENDATIONS_URL="${FUNCTION_URL%/}/recommendations"
+          echo "Recommendations URL: $RECOMMENDATIONS_URL"
+
           RESPONSE=$(curl --silent --fail --max-time 15 \
             --request POST \
             --header "Content-Type: application/json" \
             --data "$PAYLOAD" \
-            "${{ steps.url.outputs.value }}/recommendations")
+            "$RECOMMENDATIONS_URL")
 
           echo "response=$RESPONSE"
 
@@ -187,12 +191,14 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Validation error smoke test — should return 400
         run: |
+          FUNCTION_URL="${{ steps.url.outputs.value }}"
+          RECOMMENDATIONS_URL="${FUNCTION_URL%/}/recommendations"
           HTTP_CODE=$(curl --silent --output /dev/null --write-out "%{http_code}" \
             --max-time 10 \
             --request POST \
             --header "Content-Type: application/json" \
             --data '{"preferences": {"housingAffordability": 999}}' \
-            "${{ steps.url.outputs.value }}/recommendations")
+            "$RECOMMENDATIONS_URL")
 
           if [ "$HTTP_CODE" != "400" ]; then
             echo "FAIL: expected 400 for invalid input, got $HTTP_CODE"

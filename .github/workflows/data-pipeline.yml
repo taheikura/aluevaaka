@@ -94,7 +94,7 @@ jobs:
           # Give Lambda a moment to pick up the new dataset (cache invalidates on version change)
           sleep 5
 
-          RESPONSE=$(curl --silent --show-error --fail-with-body --max-time 10 "${URL%/}/health")
+            RESPONSE=$(curl --silent --show-error --fail-with-body --max-time 10 "${URL%/}/health")
           DATASET_STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('datasetStatus',''))")
 
           if [ "$DATASET_STATUS" != "available" ]; then
