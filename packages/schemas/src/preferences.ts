@@ -16,7 +16,7 @@ export const PreferencesSchema = z.object({
 export type Preferences = z.infer<typeof PreferencesSchema>;
 
 /**
- * Hard constraints — municipalities that violate any constraint
+ * Hard constraints — areas that violate any constraint
  * are excluded from results entirely before ranking.
  */
 export const ConstraintsSchema = z

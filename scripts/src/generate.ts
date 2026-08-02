@@ -22,8 +22,8 @@ import {
   checkNumericRange,
   checkValidCoordinates,
 } from './lib/quality.js';
+import { fetchCapitalAreas } from './sources/capital-areas.js';
 import { fetchHousingPrices } from './sources/housing.js';
-import { fetchMunicipalities } from './sources/municipalities.js';
 import {
   fetchMedianIncome,
   fetchNetMigration,
@@ -41,14 +41,14 @@ export async function generate(): Promise<void> {
   // 1. Fetch all sources in parallel where safe to do so
   // -------------------------------------------------------------------------
   const [
-    municipalityResult,
+    areaResult,
     populationResult,
     incomeResult,
     unemploymentResult,
     migrationResult,
     housingResult,
   ] = await Promise.all([
-    fetchMunicipalities(),
+    fetchCapitalAreas(),
     fetchPopulation(),
     fetchMedianIncome(),
     fetchUnemploymentRate(),
@@ -57,7 +57,7 @@ export async function generate(): Promise<void> {
   ]);
 
   const provenances = [
-    municipalityResult.provenance,
+    areaResult.provenance,
     populationResult.provenance,
     incomeResult.provenance,
     unemploymentResult.provenance,
@@ -84,20 +84,23 @@ export async function generate(): Promise<void> {
     housingResult.records.map((r) => [r.municipalityId, r.housingPricePerM2]),
   );
 
+  const byMunicipality = (area: MunicipalityBase, records: Map<string, number | undefined>) =>
+    records.get(area.municipalityId ?? area.id);
+
   // -------------------------------------------------------------------------
   // 3. Merge into typed structures
   // -------------------------------------------------------------------------
-  const municipalities: MunicipalityBase[] = municipalityResult.municipalities.map((m) => ({
+  const municipalities: MunicipalityBase[] = areaResult.municipalities.map((m) => ({
     ...m,
-    population: populationById.get(m.id) ?? 0,
+    population: byMunicipality(m, populationById) ?? 0,
   }));
 
   const metrics: MunicipalityMetrics[] = municipalities.map((m) => ({
     id: m.id,
-    housingPricePerM2: housingById.get(m.id),
-    medianHouseholdIncomeEur: incomeById.get(m.id),
-    unemploymentRatePercent: unemploymentById.get(m.id),
-    netMigrationPer1000: migrationById.get(m.id),
+    housingPricePerM2: byMunicipality(m, housingById),
+    medianHouseholdIncomeEur: byMunicipality(m, incomeById),
+    unemploymentRatePercent: byMunicipality(m, unemploymentById),
+    netMigrationPer1000: byMunicipality(m, migrationById),
     // Fields from future adapters (healthcare, transport, nature) will go here.
     // Until those adapters are built, the fields remain undefined.
     // The scoring engine handles missing data gracefully.
@@ -107,7 +110,7 @@ export async function generate(): Promise<void> {
   // 4. Quality checks
   // -------------------------------------------------------------------------
   const qualityResults = [
-    checkMinimumRecordCount(municipalities.length, 200, 'municipalities'),
+    checkMinimumRecordCount(municipalities.length, 100, 'capital-area postal areas'),
     checkNoDuplicateIds(
       municipalities.map((m) => m.id),
       'municipalities',
@@ -134,6 +137,16 @@ export async function generate(): Promise<void> {
       metrics.map((m) => m.unemploymentRatePercent),
       0.1,
       'unemploymentRatePercent',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.medianHouseholdIncomeEur),
+      0.1,
+      'medianHouseholdIncomeEur',
+    ),
+    checkMissingValueRate(
+      metrics.map((m) => m.netMigrationPer1000),
+      0.1,
+      'netMigrationPer1000',
     ),
   ];
 
