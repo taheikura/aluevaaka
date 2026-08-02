@@ -144,14 +144,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Inspect GitHub OIDC claims
+        run: |
+          TOKEN=$(curl --fail --silent \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
+          TOKEN="$TOKEN" python3 -c 'import base64,json,os; value=json.loads(os.environ["TOKEN"])["value"]; claims=json.loads(base64.urlsafe_b64decode(value.split(".")[1] + "=" * (-len(value.split(".")[1]) % 4))); print(json.dumps({k: claims.get(k) for k in ("iss", "aud", "sub")}, indent=2))'
+
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: aluevaaka-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume target account role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
@@ -212,13 +220,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume target account role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
