@@ -286,6 +286,12 @@ jobs:
         env:
           VITE_API_URL: ${{ steps.get-outputs.outputs.function_url }}
 
+      - name: Download Lambda bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-bundle-${{ github.sha }}
+          path: services/recommendation/
+
       - name: Upload generated data to S3
         run: |
           DATA_DIR="data/generated"
