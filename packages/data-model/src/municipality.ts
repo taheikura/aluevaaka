@@ -22,6 +22,8 @@ export interface MunicipalityBase {
   id: MunicipalityId;
   /** Parent municipality code used to join municipality-level source data. */
   municipalityId?: MunicipalityId;
+  /** Postal code used for postal-area datasets and housing joins. */
+  postalCode?: string;
   /** Official or commonly used Finnish area name */
   nameFi: string;
   /** Official Swedish name, if available */
@@ -38,10 +40,22 @@ export interface MunicipalityBase {
 /** Raw metric values for a single municipality — all optional to handle missing data gracefully */
 export interface MunicipalityMetrics {
   id: MunicipalityId;
+  /** H3 grid cell identifier when the dataset is cell-based. */
+  h3Index?: string;
 
   // Housing affordability
   /** Average asking price per m² for residential property */
   housingPricePerM2?: number;
+  /** Number of reported sales behind the postal-area housing value. */
+  housingTransactionCount?: number;
+  /** Source year for the postal-area housing value. */
+  housingDataYear?: string;
+  distanceToHealthcareKm?: number;
+  distanceToTransitKm?: number;
+  distanceToGroceryKm?: number;
+  distanceToParkKm?: number;
+  distanceToSchoolKm?: number;
+  distanceToLibraryKm?: number;
   /** Average monthly rent for a 2-room apartment */
   avgMonthlyRent2r?: number;
 
@@ -110,7 +124,7 @@ export interface DatasetManifest {
   municipalityCount: number;
   /** Number of generated capital-area postal/statistical areas. */
   areaCount?: number;
-  /** Fraction of generated areas containing each metric, from 0 to 1. */
+  /** Fraction of generated areas containing each ingested metric, from 0 to 1. */
   metricCoverage?: Record<string, number>;
   sources: DataSourceProvenance[];
   /** Any quality warnings produced by the pipeline */

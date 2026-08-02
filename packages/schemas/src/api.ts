@@ -37,6 +37,10 @@ export const RecommendationResultSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  housingPricePerM2: z.number().nonnegative().optional(),
+  housingTransactionCount: z.number().int().nonnegative().optional(),
+  housingDataYear: z.string().optional(),
+  h3Index: z.string().optional(),
   /** Overall weighted match score 0–1 */
   score: z.number().min(0).max(1),
   categoryScores: CategoryScoresSchema,

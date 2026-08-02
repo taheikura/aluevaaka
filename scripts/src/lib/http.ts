@@ -11,8 +11,8 @@ export async function fetchText(url: string): Promise<string> {
   return res.text();
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} fetching ${url}`);
   }

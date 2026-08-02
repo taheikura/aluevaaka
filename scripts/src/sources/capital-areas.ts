@@ -48,6 +48,7 @@ export async function fetchCapitalAreas(): Promise<{
       return {
         id: `postal-${feature.properties.posnro}`,
         municipalityId: feature.properties.kunta_nro,
+        postalCode: feature.properties.posnro,
         nameFi: feature.properties.nimi,
         nameSv: feature.properties.nimiru,
         region: feature.properties.kunta,

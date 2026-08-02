@@ -29,6 +29,11 @@ interface Props {
   results: RecommendationResult[];
 }
 
+const METROPOLITAN_BOUNDS: L.LatLngBoundsExpression = [
+  [60.05, 24.45],
+  [60.42, 25.35],
+];
+
 export function ResultMap({ results }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -38,7 +43,12 @@ export function ResultMap({ results }: Props) {
 
     // Initialise the map once
     if (!mapRef.current) {
-      mapRef.current = L.map(containerRef.current).setView([64.0, 26.0], 5);
+      mapRef.current = L.map(containerRef.current, {
+        maxBounds: METROPOLITAN_BOUNDS,
+        maxBoundsViscosity: 0.8,
+        minZoom: 9,
+      });
+      mapRef.current.fitBounds(METROPOLITAN_BOUNDS, { padding: [24, 24] });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
           '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -71,12 +81,15 @@ export function ResultMap({ results }: Props) {
       marker.bindPopup(
         `<strong>${i + 1}. ${r.name}</strong><br/>` +
           `${r.region}<br/>` +
-          `Sopivuus: ${Math.round(score * 100)}/100`,
+          `Sopivuus: ${Math.round(score * 100)}/100<br/>` +
+          `Terveydenhuolto: ${r.categoryScores.healthcareAccess === undefined ? 'ei dataa' : `${Math.round(r.categoryScores.healthcareAccess * 100)}/100`}<br/>` +
+          `Liikenne: ${r.categoryScores.transportConnectivity === undefined ? 'ei dataa' : `${Math.round(r.categoryScores.transportConnectivity * 100)}/100`}`,
       );
       bounds.extend([lat, lng]);
     });
 
-    map.fitBounds(bounds, { padding: [40, 40] });
+    const resultBounds = bounds.extend(METROPOLITAN_BOUNDS);
+    map.fitBounds(resultBounds, { padding: [40, 40], maxZoom: 11 });
 
     return () => {
       // Do NOT destroy map on re-render — only on unmount

@@ -16,7 +16,7 @@ const PXWEB_BASE = 'https://pxdata.stat.fi:443/PxWeb/api/v1/fi';
 
 export interface HousingRecord {
   municipalityId: string;
-  /** Average asking price per m² in EUR */
+  /** Area-level average transaction price per m² in EUR */
   housingPricePerM2?: number;
 }
 
@@ -32,7 +32,7 @@ export async function fetchHousingPrices(): Promise<{
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       query: [
-        { code: 'timeperiod_y', selection: { filter: 'top', values: ['1'] } },
+        { code: 'timeperiod_y', selection: { filter: 'item', values: ['2025'] } },
         { code: 'kunta_1_20150101', selection: { filter: 'all', values: ['*'] } },
         { code: 'talotyyppi_5_20111209', selection: { filter: 'item', values: ['0'] } },
         { code: 'contentscode', selection: { filter: 'item', values: ['keskihinta_aritm_nw'] } },

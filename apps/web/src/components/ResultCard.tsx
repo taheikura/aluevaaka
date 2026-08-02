@@ -62,6 +62,16 @@ export function ResultCard({ result, rank }: Props) {
         ))}
       </section>
 
+      {result.housingPricePerM2 !== undefined && (
+        <p className="housing-data" role="note">
+          Asuntojen toteutunut neliöhinta:{' '}
+          {Math.round(result.housingPricePerM2).toLocaleString('fi-FI')} €/m²
+          {result.housingTransactionCount !== undefined &&
+            ` · ${result.housingTransactionCount} kauppaa`}
+          {result.housingDataYear && ` · lähdevuosi ${result.housingDataYear}`}
+        </p>
+      )}
+
       {result.strengths.length > 0 && (
         <section aria-label="Vahvuudet" className="result-section">
           <h3>Vahvuudet</h3>
@@ -86,7 +96,7 @@ export function ResultCard({ result, rank }: Props) {
 
       {completenessPct < 90 && (
         <p className="completeness-warning" role="note">
-          Tietojen kattavuus: {completenessPct} % — osa tiedoista puuttuu tältä alueelta.
+          Tietojen kattavuus: {completenessPct} % nykyisistä vertailumittareista.
         </p>
       )}
     </article>

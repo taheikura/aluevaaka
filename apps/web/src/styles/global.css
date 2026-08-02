@@ -252,8 +252,8 @@ body {
   min-width: 0;
 }
 .live-map-panel {
-  height: min(68vh, 680px);
-  min-height: 420px;
+  height: min(90vh, 1100px);
+  min-height: 720px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -276,7 +276,7 @@ body {
     max-height: none;
   }
   .live-map-panel {
-    min-height: 360px;
+    min-height: 560px;
   }
 }
 
