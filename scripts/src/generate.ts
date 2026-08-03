@@ -56,6 +56,10 @@ export async function generate(): Promise<void> {
   // 3. Merge into typed structures
   // -------------------------------------------------------------------------
   const gridCells = generateGridCells(areaResult.municipalities);
+  log.info('grid_generation_complete', {
+    resolution: 10,
+    cellCount: gridCells.length,
+  });
 
   const postalMetrics: MunicipalityMetrics[] = gridCells.map((m) => ({
     id: m.id,

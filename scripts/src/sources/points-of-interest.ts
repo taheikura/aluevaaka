@@ -14,6 +14,7 @@ const OVERPASS_QUERY_TIMEOUT_SECONDS = 60;
 const REQUEST_TIMEOUT_MS = 75_000;
 const REQUEST_DELAY_MS = 15_000;
 const RETRY_AFTER_FALLBACK_MS = 60_000;
+const MAX_TILE_SUBDIVISION_DEPTH = 2;
 
 interface OverpassElement {
   id?: number;
@@ -93,6 +94,18 @@ function retryAfterMilliseconds(value: string | undefined): number | undefined {
   return Math.max(0, timestamp - Date.now());
 }
 
+function splitTile(bbox: string): string[] {
+  const [south, west, north, east] = bbox.split(',').map(Number);
+  const middleLat = (south + north) / 2;
+  const middleLng = (west + east) / 2;
+  return [
+    `${south},${west},${middleLat},${middleLng}`,
+    `${south},${middleLng},${middleLat},${east}`,
+    `${middleLat},${west},${north},${middleLng}`,
+    `${middleLat},${middleLng},${north},${east}`,
+  ];
+}
+
 export async function fetchPointsOfInterest(): Promise<{
   points: PointOfInterest[];
   provenance: DataSourceProvenance;
@@ -111,12 +124,17 @@ export async function fetchPointsOfInterest(): Promise<{
   const seen = new Set<string>();
 
   const failedTiles: number[] = [];
-  for (const [tileIndex, tile] of tiles.entries()) {
-    if (tileIndex > 0) await delay(REQUEST_DELAY_MS);
+  let requestStarted = false;
+  const fetchTile = async (
+    tile: string,
+    label: string,
+    depth: number,
+  ): Promise<{ elements: OverpassElement[]; succeeded: boolean }> => {
     let data: OverpassResponse | undefined;
     let lastError: unknown;
     for (const url of SOURCE_URLS) {
-      if (data) break;
+      if (requestStarted) await delay(REQUEST_DELAY_MS);
+      requestStarted = true;
       try {
         data = await fetchJson<OverpassResponse>(url, {
           method: 'POST',
@@ -131,40 +149,54 @@ export async function fetchPointsOfInterest(): Promise<{
       } catch (error) {
         lastError = error;
         log.warn('points_of_interest_source_failed', {
-          tile: tileIndex + 1,
+          tile: label,
           url,
           error: String(error),
           ...(error instanceof HttpError && error.retryAfter
             ? { retryAfter: error.retryAfter }
             : {}),
         });
-        if (error instanceof HttpError && error.status === 429 && error.retryAfter) {
-          log.info('points_of_interest_retry_guidance', {
-            tile: tileIndex + 1,
-            url,
-            retryAfter: error.retryAfter,
-          });
-        }
         if (error instanceof HttpError && error.status === 429) {
           const waitMs = retryAfterMilliseconds(error.retryAfter) ?? RETRY_AFTER_FALLBACK_MS;
-          log.info('points_of_interest_rate_limit_wait', {
-            tile: tileIndex + 1,
-            waitMs,
-          });
+          log.info('points_of_interest_rate_limit_wait', { tile: label, waitMs });
           await delay(waitMs);
         }
       }
     }
-    if (!data) {
-      failedTiles.push(tileIndex + 1);
-      log.warn('points_of_interest_tile_unavailable', {
-        tile: tileIndex + 1,
+    if (data) return { elements: data.elements, succeeded: true };
+
+    if (depth < MAX_TILE_SUBDIVISION_DEPTH) {
+      log.info('points_of_interest_tile_split', {
+        tile: label,
+        depth,
         error: String(lastError),
       });
+      const parts = splitTile(tile);
+      const elements: OverpassElement[] = [];
+      let succeeded = false;
+      for (const [index, part] of parts.entries()) {
+        const result = await fetchTile(part, `${label}.${index + 1}`, depth + 1);
+        elements.push(...result.elements);
+        succeeded ||= result.succeeded;
+      }
+      return { elements, succeeded };
+    }
+
+    log.warn('points_of_interest_tile_unavailable', {
+      tile: label,
+      error: String(lastError),
+    });
+    return { elements: [], succeeded: false };
+  };
+
+  for (const [tileIndex, tile] of tiles.entries()) {
+    const result = await fetchTile(tile, String(tileIndex + 1), 0);
+    if (!result.succeeded) {
+      failedTiles.push(tileIndex + 1);
       continue;
     }
 
-    for (const element of data.elements) {
+    for (const element of result.elements) {
       const kind = kindForElement(element);
       const lat = element.lat ?? element.center?.lat;
       const lng = element.lon ?? element.center?.lon;
@@ -176,7 +208,7 @@ export async function fetchPointsOfInterest(): Promise<{
     }
     log.info('fetch_points_of_interest_tile_done', {
       tile: tileIndex + 1,
-      count: data.elements.length,
+      count: result.elements.length,
     });
   }
 

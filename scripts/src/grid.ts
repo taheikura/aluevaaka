@@ -1,5 +1,5 @@
 import type { MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
-import { cellToBoundary, cellToLatLng, gridDisk, latLngToCell } from 'h3-js';
+import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
 import type { PointOfInterest, PointOfInterestKind } from './sources/points-of-interest.js';
 
 export interface GridCell extends MunicipalityBase {
@@ -26,6 +26,15 @@ const KIND_KEYS: Record<PointOfInterestKind, keyof GridCellMetrics> = {
   library: 'distanceToLibraryKm',
 };
 
+const GRID_RESOLUTION = 10;
+const GRID_BOUNDS = [
+  [60.05, 24.45],
+  [60.05, 25.35],
+  [60.42, 25.35],
+  [60.42, 24.45],
+  [60.05, 24.45],
+] as [number, number][];
+
 function distanceKm(a: [number, number], b: [number, number]): number {
   const [lat1, lon1] = a;
   const [lat2, lon2] = b;
@@ -50,25 +59,34 @@ function nearestDistance(
   return Math.min(...matches.map((point) => distanceKm(cell, [point.lat, point.lng])));
 }
 
-export function generateGridCells(areas: MunicipalityBase[], resolution = 8): GridCell[] {
-  const cells = new Map<string, GridCell>();
-  for (const area of areas) {
-    if (!Number.isFinite(area.coordinates.lat) || !Number.isFinite(area.coordinates.lng)) continue;
-    const index = latLngToCell(area.coordinates.lat, area.coordinates.lng, resolution);
-    for (const cell of gridDisk(index, 3)) {
-      const [lat, lng] = cellToLatLng(cell);
-      if (lat < 60.05 || lat > 60.42 || lng < 24.45 || lng > 25.35) continue;
-      cells.set(cell, {
-        ...area,
-        id: `h3-${cell}`,
-        nameFi: `${area.nameFi} (${area.postalCode ?? area.id})`,
-        coordinates: { lat, lng },
-        polygon: cellToBoundary(cell).map(([cellLat, cellLng]) => [cellLat, cellLng]),
-        h3Index: cell,
-      });
-    }
-  }
-  return [...cells.values()];
+function nearestArea(cell: [number, number], areas: MunicipalityBase[]): MunicipalityBase {
+  return areas.reduce((nearest, area) => {
+    const nearestDistance = distanceKm(cell, [nearest.coordinates.lat, nearest.coordinates.lng]);
+    const areaDistance = distanceKm(cell, [area.coordinates.lat, area.coordinates.lng]);
+    return areaDistance < nearestDistance ? area : nearest;
+  });
+}
+
+export function generateGridCells(
+  areas: MunicipalityBase[],
+  resolution = GRID_RESOLUTION,
+): GridCell[] {
+  const validAreas = areas.filter(
+    (area) => Number.isFinite(area.coordinates.lat) && Number.isFinite(area.coordinates.lng),
+  );
+  const cells = polygonToCells(GRID_BOUNDS, resolution);
+  return cells.map((cell) => {
+    const [lat, lng] = cellToLatLng(cell);
+    const area = nearestArea([lat, lng], validAreas);
+    return {
+      ...area,
+      id: `h3-${cell}`,
+      nameFi: `${area.nameFi} (${area.postalCode ?? area.id})`,
+      coordinates: { lat, lng },
+      polygon: cellToBoundary(cell).map(([cellLat, cellLng]) => [cellLat, cellLng]),
+      h3Index: cell,
+    };
+  });
 }
 
 export function calculateGridMetrics(
