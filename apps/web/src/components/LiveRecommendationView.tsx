@@ -14,6 +14,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   transportConnectivity: 0,
   natureAndRecreation: 0,
   economicOutlook: 0,
+  natureProximity: 0,
   services: 0,
 };
 

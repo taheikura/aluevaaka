@@ -3,10 +3,25 @@
  * Node 20 has native fetch — no extra deps needed.
  */
 
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly url: string,
+    public readonly retryAfter?: string,
+  ) {
+    super(`HTTP ${status} fetching ${url}`);
+    this.name = 'HttpError';
+  }
+}
+
+function requestError(response: Response, url: string): HttpError {
+  return new HttpError(response.status, url, response.headers.get('retry-after') ?? undefined);
+}
+
 export async function fetchText(url: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} fetching ${url}`);
+    throw requestError(res, url);
   }
   return res.text();
 }
@@ -14,7 +29,7 @@ export async function fetchText(url: string): Promise<string> {
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} fetching ${url}`);
+    throw requestError(res, url);
   }
   return res.json() as Promise<T>;
 }

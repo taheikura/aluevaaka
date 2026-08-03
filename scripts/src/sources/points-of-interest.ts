@@ -1,5 +1,5 @@
 import type { DataSourceProvenance } from '@aluevaaka/data-model';
-import { fetchJson } from '../lib/http.js';
+import { fetchJson, HttpError } from '../lib/http.js';
 import { log } from '../lib/logger.js';
 
 const SOURCE_URLS = [
@@ -70,7 +70,14 @@ export async function fetchPointsOfInterest(): Promise<{
         break;
       } catch (error) {
         lastError = error;
-        log.warn('points_of_interest_source_failed', { kind, url, error: String(error) });
+        log.warn('points_of_interest_source_failed', {
+          kind,
+          url,
+          error: String(error),
+          ...(error instanceof HttpError && error.retryAfter
+            ? { retryAfter: error.retryAfter }
+            : {}),
+        });
       }
     }
     if (!data) {

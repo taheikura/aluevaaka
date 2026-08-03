@@ -23,6 +23,8 @@ export const CategoryScoresSchema = z.object({
   healthcareAccess: z.number().min(0).max(1).optional(),
   transportConnectivity: z.number().min(0).max(1).optional(),
   natureAndRecreation: z.number().min(0).max(1).optional(),
+  groceryProximity: z.number().min(0).max(1).optional(),
+  schoolProximity: z.number().min(0).max(1).optional(),
   economicOutlook: z.number().min(0).max(1).optional(),
   safety: z.number().min(0).max(1).optional(),
   services: z.number().min(0).max(1).optional(),

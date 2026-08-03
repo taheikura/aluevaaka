@@ -149,6 +149,25 @@ function scoreNature(m: MunicipalityMetrics, ranges: MetricRanges): number | und
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
 }
 
+function scoreDistance(
+  value: number | undefined,
+  range: { min: number; max: number } | undefined,
+): number | undefined {
+  if (!range) return undefined;
+  return normalizeLowerIsBetter(value, range.min, range.max);
+}
+
+function scoreServices(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
+  const scores = [
+    scoreDistance(m.distanceToGroceryKm, ranges.distanceToGroceryKm),
+    scoreDistance(m.distanceToSchoolKm, ranges.distanceToSchoolKm),
+    scoreDistance(m.distanceToLibraryKm, ranges.distanceToLibraryKm),
+  ].filter((score): score is number => score !== undefined);
+  return scores.length > 0
+    ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+    : undefined;
+}
+
 function scoreSafety(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const r = ranges.crimeRatePer1000;
   if (!r) return undefined;
@@ -183,6 +202,8 @@ const CATEGORY_LABELS: Record<keyof CategoryScores, string> = {
   healthcareAccess: 'Healthcare access',
   transportConnectivity: 'Transport connectivity',
   natureAndRecreation: 'Nature and recreation',
+  groceryProximity: 'Grocery proximity',
+  schoolProximity: 'School proximity',
   economicOutlook: 'Economic outlook',
   services: 'Local services',
   safety: 'Safety',
@@ -190,8 +211,8 @@ const CATEGORY_LABELS: Record<keyof CategoryScores, string> = {
 
 const PREFERENCE_CATEGORY: Record<string, keyof CategoryScores> = {
   healthcareProximity: 'healthcareAccess',
-  groceryProximity: 'services',
-  schoolProximity: 'services',
+  groceryProximity: 'groceryProximity',
+  schoolProximity: 'schoolProximity',
   natureProximity: 'natureAndRecreation',
 };
 
@@ -237,12 +258,20 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
   const metricsById = new Map(metrics.map((m) => [m.id, m]));
 
   // Normalize preference weights so they sum to 1
-  const weightSum = Object.values(preferences).reduce((a, b) => (a ?? 0) + (b ?? 0), 0);
+  const effectivePreferences = {
+    ...preferences,
+    ...(preferences.natureProximity && preferences.natureProximity > 0
+      ? { natureAndRecreation: 0 }
+      : {}),
+    ...(preferences.groceryProximity && preferences.groceryProximity > 0 ? { services: 0 } : {}),
+    ...(preferences.schoolProximity && preferences.schoolProximity > 0 ? { services: 0 } : {}),
+  };
+  const weightSum = Object.values(effectivePreferences).reduce((a, b) => (a ?? 0) + (b ?? 0), 0);
   const normalizedWeights: Preferences =
     weightSum === 0
-      ? preferences
+      ? effectivePreferences
       : (Object.fromEntries(
-          Object.entries(preferences).map(([k, v]) => [k, (v ?? 0) / (weightSum ?? 1)]),
+          Object.entries(effectivePreferences).map(([k, v]) => [k, (v ?? 0) / (weightSum ?? 1)]),
         ) as Preferences);
 
   const results: RecommendationResult[] = [];
@@ -263,7 +292,10 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       healthcareAccess: scoreHealthcare(m, ranges) ?? undefined,
       transportConnectivity: scoreTransport(m, ranges) ?? undefined,
       natureAndRecreation: scoreNature(m, ranges) ?? undefined,
+      groceryProximity: scoreDistance(m.distanceToGroceryKm, ranges.distanceToGroceryKm),
+      schoolProximity: scoreDistance(m.distanceToSchoolKm, ranges.distanceToSchoolKm),
       economicOutlook: undefined,
+      services: scoreServices(m, ranges),
       safety: scoreSafety(m, ranges) ?? undefined,
     };
 

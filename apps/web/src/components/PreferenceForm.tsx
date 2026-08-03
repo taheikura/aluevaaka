@@ -30,9 +30,9 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     description: 'Julkinen liikenne, raideyhteydet ja laajakaista',
   },
   {
-    key: 'natureAndRecreation',
-    label: 'Luonto ja virkistys',
-    description: 'Metsäisyys, vesistöt ja luontoalueet',
+    key: 'natureProximity',
+    label: 'Lähellä luontoa',
+    description: 'Etäisyys lähimpään puistoon tai luonnonsuojelualueeseen',
   },
   {
     key: 'economicOutlook',
@@ -43,11 +43,6 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     key: 'safety',
     label: 'Turvallisuus',
     description: 'Alueen rikollisuustaso, kun lähdeaineisto on saatavilla',
-  },
-  {
-    key: 'services',
-    label: 'Palvelut',
-    description: 'Kauppa-, koulu- ja muut lähipalvelut',
   },
   {
     key: 'healthcareProximity',
@@ -63,11 +58,6 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     key: 'schoolProximity',
     label: 'Lähellä kouluja',
     description: 'Etäisyys lähimpään kouluun',
-  },
-  {
-    key: 'natureProximity',
-    label: 'Lähellä luontoa',
-    description: 'Etäisyys puistoon tai luonnonsuojelualueelle',
   },
 ];
 
