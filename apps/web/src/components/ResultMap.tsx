@@ -68,11 +68,21 @@ export function ResultMap({ results }: Props) {
         map.removeLayer(layer);
     });
 
-    if (results.length === 0) return;
+    const validResults = results.filter(
+      (result) =>
+        Number.isFinite(result.coordinates.lat) &&
+        Number.isFinite(result.coordinates.lng) &&
+        result.coordinates.lat >= -90 &&
+        result.coordinates.lat <= 90 &&
+        result.coordinates.lng >= -180 &&
+        result.coordinates.lng <= 180,
+    );
+
+    if (validResults.length === 0) return;
 
     const bounds = L.latLngBounds([]);
 
-    results.forEach((r, i) => {
+    validResults.forEach((r, i) => {
       const { lat, lng } = r.coordinates;
       const score = Math.max(0, Math.min(1, r.score));
       const hue = Math.round(score * 120);
@@ -83,14 +93,23 @@ export function ResultMap({ results }: Props) {
         fillOpacity: 0.45,
         weight: 2,
       }).addTo(map);
-      if (r.polygon) {
-        const polygon = L.polygon(r.polygon, {
+      const polygon = r.polygon?.filter(
+        ([polygonLat, polygonLng]) =>
+          Number.isFinite(polygonLat) &&
+          Number.isFinite(polygonLng) &&
+          polygonLat >= -90 &&
+          polygonLat <= 90 &&
+          polygonLng >= -180 &&
+          polygonLng <= 180,
+      );
+      if (polygon && polygon.length >= 3) {
+        const cellPolygon = L.polygon(polygon, {
           color: `hsl(${hue} 75% 35%)`,
           fillColor: `hsl(${hue} 85% 50%)`,
           fillOpacity: 0.28,
           weight: 1,
         }).addTo(map);
-        polygon.bindPopup(marker.getPopup() ?? '');
+        cellPolygon.bindPopup(marker.getPopup() ?? '');
       }
       marker.bindPopup(
         `<strong>${i + 1}. ${r.name}</strong><br/>` +

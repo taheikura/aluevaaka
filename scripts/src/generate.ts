@@ -22,6 +22,7 @@ import {
   checkNoDuplicateIds,
   checkNumericRange,
   checkValidCoordinates,
+  checkValidPolygons,
 } from './lib/quality.js';
 import { fetchCapitalAreas } from './sources/capital-areas.js';
 import { fetchPointsOfInterest } from './sources/points-of-interest.js';
@@ -82,6 +83,7 @@ export async function generate(): Promise<void> {
       'municipalities',
     ),
     checkValidCoordinates(municipalities.map((m) => ({ ...m.coordinates, id: m.id }))),
+    checkValidPolygons(municipalities),
     checkNumericRange(
       metrics.map((m) => m.housingPricePerM2),
       100,

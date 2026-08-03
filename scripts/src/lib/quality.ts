@@ -92,6 +92,8 @@ export function checkValidCoordinates(
   const FINLAND = { latMin: 59.5, latMax: 70.2, lngMin: 19.0, lngMax: 31.6 };
   const invalid = coords.filter(
     (c) =>
+      !Number.isFinite(c.lat) ||
+      !Number.isFinite(c.lng) ||
       c.lat < FINLAND.latMin ||
       c.lat > FINLAND.latMax ||
       c.lng < FINLAND.lngMin ||
@@ -104,6 +106,32 @@ export function checkValidCoordinates(
     message: `${invalid.length} municipalities have coordinates outside Finland: ${invalid
       .slice(0, 3)
       .map((c) => c.id)
+      .join(', ')}`,
+  };
+}
+
+export function checkValidPolygons(
+  areas: Array<{ id: string; polygon?: Array<[number, number]> }>,
+): QualityResult {
+  const invalid = areas.filter(({ polygon }) => {
+    if (!polygon || polygon.length < 3) return true;
+    return polygon.some(
+      ([lat, lng]) =>
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng) ||
+        lat < 59.5 ||
+        lat > 70.2 ||
+        lng < 19 ||
+        lng > 31.6,
+    );
+  });
+  return {
+    check: 'valid_polygons',
+    passed: invalid.length === 0,
+    severity: 'error',
+    message: `${invalid.length} areas have missing or invalid polygons: ${invalid
+      .slice(0, 5)
+      .map(({ id }) => id)
       .join(', ')}`,
   };
 }

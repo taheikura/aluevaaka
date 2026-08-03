@@ -53,6 +53,7 @@ function nearestDistance(
 export function generateGridCells(areas: MunicipalityBase[], resolution = 8): GridCell[] {
   const cells = new Map<string, GridCell>();
   for (const area of areas) {
+    if (!Number.isFinite(area.coordinates.lat) || !Number.isFinite(area.coordinates.lng)) continue;
     const index = latLngToCell(area.coordinates.lat, area.coordinates.lng, resolution);
     for (const cell of gridDisk(index, 3)) {
       const [lat, lng] = cellToLatLng(cell);
