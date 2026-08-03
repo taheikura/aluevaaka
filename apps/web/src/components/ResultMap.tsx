@@ -67,7 +67,16 @@ export function ResultMap({ results }: Props) {
       }
     });
 
-    // Clear old markers and score overlays
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear old score overlays without changing the user's viewport.
     map.eachLayer((layer) => {
       if (layer instanceof L.CircleMarker || layer instanceof L.Polygon) map.removeLayer(layer);
     });
@@ -84,10 +93,7 @@ export function ResultMap({ results }: Props) {
 
     if (validResults.length === 0) return;
 
-    const bounds = L.latLngBounds([]);
-
     validResults.forEach((r) => {
-      const { lat, lng } = r.coordinates;
       const score = Math.max(0, Math.min(1, r.score));
       const hue = Math.round(score * 120);
       const polygon = r.polygon?.filter(
@@ -120,16 +126,7 @@ export function ResultMap({ results }: Props) {
             `Palvelut: ${formatScore(r.categoryScores.services)}`,
         );
       }
-      bounds.extend([lat, lng]);
     });
-
-    const resultBounds = bounds.extend(METROPOLITAN_BOUNDS);
-    fitMapToBounds(resultBounds);
-
-    return () => {
-      // Do NOT destroy map on re-render — only on unmount
-      resizeObserver.disconnect();
-    };
   }, [results]);
 
   // Destroy map on component unmount
