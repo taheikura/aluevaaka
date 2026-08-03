@@ -37,6 +37,7 @@ export const RecommendationResultSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  polygon: z.array(z.tuple([z.number(), z.number()])).optional(),
   housingPricePerM2: z.number().nonnegative().optional(),
   housingTransactionCount: z.number().int().nonnegative().optional(),
   housingDataYear: z.string().optional(),
