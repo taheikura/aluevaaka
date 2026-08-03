@@ -17,6 +17,7 @@ import {
   checkNoDuplicateIds,
   checkNumericRange,
   checkValidCoordinates,
+  checkValidPolygons,
 } from './lib/quality.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -41,6 +42,7 @@ async function validate(): Promise<void> {
       'municipalities',
     ),
     checkValidCoordinates(municipalities.map((m) => ({ ...m.coordinates, id: m.id }))),
+    checkValidPolygons(municipalities),
     checkNumericRange(
       metrics.map((m) => m.unemploymentRatePercent),
       0,
