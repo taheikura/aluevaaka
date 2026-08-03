@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload pipeline report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dataset-pipeline-report-${{ github.run_id }}
           path: |
@@ -122,7 +122,7 @@ jobs:
           PY
 
       - name: Save dataset as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dataset-${{ github.run_id }}
           path: data/generated/

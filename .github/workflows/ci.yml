@@ -160,7 +160,7 @@ jobs:
         run: pnpm --filter @aluevaaka/recommendation build
 
       - name: Upload Lambda bundle artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lambda-bundle
           path: services/recommendation/lambda.zip
@@ -197,7 +197,7 @@ jobs:
           VITE_API_URL: https://placeholder.lambda-url.eu-north-1.on.aws
 
       - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: web-dist
           path: apps/web/dist/

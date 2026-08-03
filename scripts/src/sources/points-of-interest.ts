@@ -10,8 +10,8 @@ const BOUNDS = { south: 60.05, west: 24.45, north: 60.42, east: 25.35 };
 const TILE_ROWS = 4;
 const TILE_COLUMNS = 4;
 const USER_AGENT = 'aluevaaka-data-pipeline/1.0 contact: github.com/taheikura/aluevaaka';
-const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
-const REQUEST_TIMEOUT_MS = 35_000;
+const OVERPASS_QUERY_TIMEOUT_SECONDS = 60;
+const REQUEST_TIMEOUT_MS = 75_000;
 
 interface OverpassElement {
   id?: number;
