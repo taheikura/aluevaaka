@@ -1,5 +1,5 @@
 import type { MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
-import { cellToLatLng, gridDisk, latLngToCell } from 'h3-js';
+import { cellToBoundary, cellToLatLng, gridDisk, latLngToCell } from 'h3-js';
 import type { PointOfInterest, PointOfInterestKind } from './sources/points-of-interest.js';
 
 export interface GridCell extends MunicipalityBase {
@@ -62,6 +62,7 @@ export function generateGridCells(areas: MunicipalityBase[], resolution = 8): Gr
         id: `h3-${cell}`,
         nameFi: `Alue ${cell.slice(-6)}`,
         coordinates: { lat, lng },
+        polygon: cellToBoundary(cell).map(([cellLat, cellLng]) => [cellLat, cellLng]),
         h3Index: cell,
       });
     }

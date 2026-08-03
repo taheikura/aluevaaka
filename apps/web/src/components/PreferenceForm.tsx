@@ -43,6 +43,26 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     label: 'Palvelut',
     description: 'Kauppa-, koulu- ja muut lähipalvelut',
   },
+  {
+    key: 'healthcareProximity',
+    label: 'Lähellä terveyspalveluita',
+    description: 'Etäisyys lähimpään terveyspalveluun',
+  },
+  {
+    key: 'groceryProximity',
+    label: 'Lähellä ruokakauppoja',
+    description: 'Etäisyys lähimpään ruokakauppaan',
+  },
+  {
+    key: 'schoolProximity',
+    label: 'Lähellä kouluja',
+    description: 'Etäisyys lähimpään kouluun',
+  },
+  {
+    key: 'natureProximity',
+    label: 'Lähellä luontoa',
+    description: 'Etäisyys puistoon tai luonnonsuojelualueelle',
+  },
 ];
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -52,6 +72,10 @@ const DEFAULT_PREFERENCES: Preferences = {
   natureAndRecreation: 0,
   economicOutlook: 0,
   services: 0,
+  healthcareProximity: 0,
+  groceryProximity: 0,
+  schoolProximity: 0,
+  natureProximity: 0,
 };
 
 export function PreferenceForm({ value, onChange, onSubmit, isLoading }: Props) {
@@ -85,7 +109,7 @@ export function PreferenceForm({ value, onChange, onSubmit, isLoading }: Props) 
     (onChange ?? onSubmit)?.(request);
   }
 
-  const anyWeightSet = Object.values(preferences).some((v) => v > 0);
+  const anyWeightSet = Object.values(preferences).some((v) => (v ?? 0) > 0);
 
   return (
     <form onSubmit={handleSubmit} className="preference-form" noValidate>

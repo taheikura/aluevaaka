@@ -60,7 +60,12 @@ export function ResultMap({ results }: Props) {
 
     // Clear old markers and score overlays
     map.eachLayer((layer) => {
-      if (layer instanceof L.Marker || layer instanceof L.CircleMarker) map.removeLayer(layer);
+      if (
+        layer instanceof L.Marker ||
+        layer instanceof L.CircleMarker ||
+        layer instanceof L.Polygon
+      )
+        map.removeLayer(layer);
     });
 
     if (results.length === 0) return;
@@ -78,6 +83,15 @@ export function ResultMap({ results }: Props) {
         fillOpacity: 0.45,
         weight: 2,
       }).addTo(map);
+      if (r.polygon) {
+        const polygon = L.polygon(r.polygon, {
+          color: `hsl(${hue} 75% 35%)`,
+          fillColor: `hsl(${hue} 85% 50%)`,
+          fillOpacity: 0.28,
+          weight: 1,
+        }).addTo(map);
+        polygon.bindPopup(marker.getPopup() ?? '');
+      }
       marker.bindPopup(
         `<strong>${i + 1}. ${r.name}</strong><br/>` +
           `${r.region}<br/>` +

@@ -231,11 +231,14 @@ body {
   align-items: start;
 }
 .live-filters {
-  position: sticky;
+  position: absolute;
+  z-index: 1000;
   top: 1rem;
+  left: 1rem;
+  width: min(360px, calc(100% - 2rem));
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 1rem;
@@ -250,6 +253,7 @@ body {
 }
 .live-results {
   min-width: 0;
+  position: relative;
 }
 .live-map-panel {
   height: min(90vh, 1100px);
@@ -267,13 +271,20 @@ body {
   margin: 0.75rem 0;
 }
 
+.live-results .results-list {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .live-recommendation-layout {
     grid-template-columns: 1fr;
   }
   .live-filters {
-    position: static;
+    position: absolute;
     max-height: none;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: min(300px, calc(100% - 1rem));
   }
   .live-map-panel {
     min-height: 560px;

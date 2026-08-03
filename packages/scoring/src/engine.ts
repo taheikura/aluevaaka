@@ -221,12 +221,12 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
   const metricsById = new Map(metrics.map((m) => [m.id, m]));
 
   // Normalize preference weights so they sum to 1
-  const weightSum = Object.values(preferences).reduce((a, b) => a + b, 0);
+  const weightSum = Object.values(preferences).reduce((a, b) => (a ?? 0) + (b ?? 0), 0);
   const normalizedWeights: Preferences =
     weightSum === 0
       ? preferences
       : (Object.fromEntries(
-          Object.entries(preferences).map(([k, v]) => [k, v / weightSum]),
+          Object.entries(preferences).map(([k, v]) => [k, (v ?? 0) / (weightSum ?? 1)]),
         ) as Preferences);
 
   const results: RecommendationResult[] = [];
@@ -276,6 +276,7 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       name: muni.nameFi,
       region: muni.region,
       coordinates: muni.coordinates,
+      polygon: muni.polygon,
       housingPricePerM2: m.housingPricePerM2,
       housingTransactionCount: m.housingTransactionCount,
       housingDataYear: m.housingDataYear,

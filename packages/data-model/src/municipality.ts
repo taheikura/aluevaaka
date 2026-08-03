@@ -18,6 +18,8 @@ export interface MunicipalityCoordinates {
   lng: number;
 }
 
+export type AreaPolygon = [number, number][];
+
 export interface MunicipalityBase {
   id: MunicipalityId;
   /** Parent municipality code used to join municipality-level source data. */
@@ -31,6 +33,7 @@ export interface MunicipalityBase {
   /** Parent city for the capital-area MVP */
   region: string;
   coordinates: MunicipalityCoordinates;
+  polygon?: AreaPolygon;
   /** Population from latest available census */
   population: number;
   /** Land area in km² */

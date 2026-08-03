@@ -11,6 +11,10 @@ export const PreferencesSchema = z.object({
   natureAndRecreation: z.number().min(0).max(1).default(0),
   economicOutlook: z.number().min(0).max(1).default(0),
   services: z.number().min(0).max(1).default(0),
+  healthcareProximity: z.number().min(0).max(1).default(0).optional(),
+  groceryProximity: z.number().min(0).max(1).default(0).optional(),
+  schoolProximity: z.number().min(0).max(1).default(0).optional(),
+  natureProximity: z.number().min(0).max(1).default(0).optional(),
 });
 
 export type Preferences = z.infer<typeof PreferencesSchema>;

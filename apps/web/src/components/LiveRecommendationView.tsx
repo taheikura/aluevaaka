@@ -20,22 +20,17 @@ const DEFAULT_PREFERENCES: Preferences = {
 
 export function LiveRecommendationView() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
-  const [maxHousingCost, setMaxHousingCost] = useState('');
-  const [maxHealthcareKm, setMaxHealthcareKm] = useState('');
   const [data, setData] = useState<RecommendationResponse | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const request: RecommendationRequest = {
     preferences,
-    constraints: {
-      ...(maxHousingCost ? { maximumHousingCostEur: Number(maxHousingCost) } : {}),
-      ...(maxHealthcareKm ? { maximumDistanceToHealthcareKm: Number(maxHealthcareKm) } : {}),
-    },
+    constraints: {},
     limit: 50,
   };
 
   useEffect(() => {
-    if (!Object.values(preferences).some((value) => value > 0)) return;
+    if (!Object.values(preferences).some((value) => (value ?? 0) > 0)) return;
     const timer = window.setTimeout(async () => {
       setStatus('loading');
       try {
@@ -46,19 +41,17 @@ export function LiveRecommendationView() {
       }
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [preferences, maxHousingCost, maxHealthcareKm]);
+  }, [preferences]);
 
   const updatePreferences = (next: RecommendationRequest) => {
     setPreferences(next.preferences);
-    setMaxHousingCost(next.constraints?.maximumHousingCostEur?.toString() ?? '');
-    setMaxHealthcareKm(next.constraints?.maximumDistanceToHealthcareKm?.toString() ?? '');
   };
 
   return (
     <div className="live-recommendation-layout">
       <aside className="live-filters" aria-label="Aluehaun suodattimet">
         <PreferenceForm
-          value={{ preferences, maxHousingCost, maxHealthcareKm }}
+          value={{ preferences, maxHousingCost: '', maxHealthcareKm: '' }}
           onChange={updatePreferences}
           isLoading={status === 'loading'}
         />
