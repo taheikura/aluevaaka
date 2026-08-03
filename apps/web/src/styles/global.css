@@ -48,10 +48,12 @@ body {
   padding: 1.5rem 1rem;
 }
 .main-content:has(.live-recommendation-layout) {
+  flex: 1 1 auto;
   max-width: none;
-  height: calc(100vh - 62px);
+  height: auto;
   min-height: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 /* Header */
@@ -129,10 +131,10 @@ body {
 }
 .preference-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) 190px;
   gap: 0.5rem 1rem;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
 .preference-row label {
   display: flex;
@@ -149,7 +151,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 160px;
+  width: 190px;
+  justify-self: end;
 }
 .slider-wrapper input[type="range"] {
   flex: 1;
@@ -234,7 +237,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 0;
 }
 .live-filters {
   position: absolute;
@@ -254,18 +257,40 @@ body {
   border: 0;
   margin-bottom: 0.5rem;
 }
+.live-filters .form-hint {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  margin-bottom: 0.65rem;
+}
+.live-filters .preference-row {
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.45rem;
+}
+.live-filters .slider-wrapper {
+  width: 150px;
+}
+.live-filters .pref-desc {
+  display: none;
+}
+.live-filters .preference-form fieldset:first-child {
+  padding-top: 0;
+}
+.live-filters .preference-form fieldset:first-child legend {
+  font-size: 0.95rem;
+}
 .live-filters .preference-form .submit-button {
   display: none;
 }
 .live-results {
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 0;
   position: relative;
 }
 .live-map-panel {
   height: 100%;
-  min-height: 420px;
+  min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -274,7 +299,7 @@ body {
 .result-map {
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 0;
   background: #dbeafe;
 }
 .live-map-panel .result-map {
@@ -306,6 +331,12 @@ body {
   }
   .live-map-panel {
     min-height: 60vh;
+  }
+  .live-filters .preference-row {
+    grid-template-columns: minmax(0, 1fr) 130px;
+  }
+  .live-filters .slider-wrapper {
+    width: 130px;
   }
 }
 

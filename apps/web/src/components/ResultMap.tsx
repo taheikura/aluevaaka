@@ -12,18 +12,6 @@ import L from 'leaflet';
 import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { RecommendationResult } from '@aluevaaka/schemas';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-// Fix default marker icon paths broken by bundlers
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-// @ts-expect-error -- patching Leaflet default icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
 
 interface Props {
   results: RecommendationResult[];
@@ -81,12 +69,7 @@ export function ResultMap({ results }: Props) {
 
     // Clear old markers and score overlays
     map.eachLayer((layer) => {
-      if (
-        layer instanceof L.Marker ||
-        layer instanceof L.CircleMarker ||
-        layer instanceof L.Polygon
-      )
-        map.removeLayer(layer);
+      if (layer instanceof L.CircleMarker || layer instanceof L.Polygon) map.removeLayer(layer);
     });
 
     const validResults = results.filter(
@@ -103,17 +86,10 @@ export function ResultMap({ results }: Props) {
 
     const bounds = L.latLngBounds([]);
 
-    validResults.forEach((r, i) => {
+    validResults.forEach((r) => {
       const { lat, lng } = r.coordinates;
       const score = Math.max(0, Math.min(1, r.score));
       const hue = Math.round(score * 120);
-      const marker = L.circleMarker([lat, lng], {
-        radius: 16,
-        color: `hsl(${hue} 75% 35%)`,
-        fillColor: `hsl(${hue} 85% 50%)`,
-        fillOpacity: 0.45,
-        weight: 2,
-      }).addTo(map);
       const polygon = r.polygon?.filter(
         ([polygonLat, polygonLng]) =>
           Number.isFinite(polygonLat) &&
@@ -130,15 +106,20 @@ export function ResultMap({ results }: Props) {
           fillOpacity: 0.28,
           weight: 1,
         }).addTo(map);
-        cellPolygon.bindPopup(marker.getPopup() ?? '');
+        cellPolygon.bindPopup(
+          `<strong>${escapeHtml(r.name)}</strong><br/>` +
+            `${escapeHtml(r.region)}<br/>` +
+            `<hr>` +
+            `<strong>Värin peruste</strong><br/>` +
+            `Sopivuus: ${Math.round(score * 100)}/100<br/>` +
+            `Tietojen kattavuus: ${Math.round(r.dataCompleteness * 100)}%<br/>` +
+            `Asuminen: ${formatScore(r.categoryScores.housingAffordability)}<br/>` +
+            `Terveydenhuolto: ${formatScore(r.categoryScores.healthcareAccess)}<br/>` +
+            `Liikenne: ${formatScore(r.categoryScores.transportConnectivity)}<br/>` +
+            `Luonto: ${formatScore(r.categoryScores.natureAndRecreation)}<br/>` +
+            `Palvelut: ${formatScore(r.categoryScores.services)}`,
+        );
       }
-      marker.bindPopup(
-        `<strong>${i + 1}. ${r.name}</strong><br/>` +
-          `${r.region}<br/>` +
-          `Sopivuus: ${Math.round(score * 100)}/100<br/>` +
-          `Terveydenhuolto: ${r.categoryScores.healthcareAccess === undefined ? 'ei dataa' : `${Math.round(r.categoryScores.healthcareAccess * 100)}/100`}<br/>` +
-          `Liikenne: ${r.categoryScores.transportConnectivity === undefined ? 'ei dataa' : `${Math.round(r.categoryScores.transportConnectivity * 100)}/100`}`,
-      );
       bounds.extend([lat, lng]);
     });
 
@@ -166,5 +147,18 @@ export function ResultMap({ results }: Props) {
       role="region"
       aria-label="Alueiden sopivuuskartta"
     />
+  );
+}
+
+function formatScore(score: number | undefined): string {
+  return score === undefined ? 'ei dataa' : `${Math.round(score * 100)}/100`;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character] ??
+      character,
   );
 }
