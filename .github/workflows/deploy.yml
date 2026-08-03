@@ -80,7 +80,7 @@ jobs:
           SERVICE_VERSION: ${{ github.sha }}
 
       - name: Upload Lambda bundle
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/lambda.zip
@@ -113,7 +113,7 @@ jobs:
         run: pnpm --filter @aluevaaka/scripts pipeline
 
       - name: Upload generated dataset
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: generated-data-${{ github.sha }}
           path: data/generated/
@@ -153,14 +153,14 @@ jobs:
           TOKEN="$TOKEN" python3 -c 'import base64,json,os; value=json.loads(os.environ["TOKEN"])["value"]; claims=json.loads(base64.urlsafe_b64decode(value.split(".")[1] + "=" * (-len(value.split(".")[1]) % 4))); print(json.dumps({k: claims.get(k) for k in ("iss", "aud", "sub")}, indent=2))'
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: aluevaaka-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume target account role
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
@@ -181,7 +181,7 @@ jobs:
           echo "account_id=$ACTUAL_ACCOUNT" >> "$GITHUB_OUTPUT"
 
       - name: Download Lambda bundle (CDK asset)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/
@@ -235,13 +235,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume target account role
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ needs.setup.outputs.aws_role_arn }}
           role-chaining: true
@@ -287,7 +287,7 @@ jobs:
           VITE_API_URL: ${{ steps.get-outputs.outputs.function_url }}
 
       - name: Download Lambda bundle
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/
@@ -299,7 +299,7 @@ jobs:
           echo "Uploading dataset to s3://${{ steps.get-outputs.outputs.data_bucket }}/data/generated/"
         # The actual upload uses the upload script which reads DATA_BUCKET env var
       - name: Download generated dataset artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: generated-data-${{ github.sha }}
           path: data/generated/
