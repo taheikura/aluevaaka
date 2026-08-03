@@ -1,7 +1,7 @@
 name: Data pipeline
 
 on:
-  # Run monthly; OSM changes are refreshed independently from application deploys.
+  # Run monthly to refresh the raw OSM snapshot and rebuild the dataset.
   schedule:
     - cron: "0 3 1 * *"  # First day of each month, 03:00 UTC
 
@@ -14,6 +14,12 @@ on:
         default: development
         type: choice
         options: [production, development]
+
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/src/**'
+      - 'packages/data-model/**'
 
 
 env:
@@ -45,7 +51,7 @@ jobs:
       - name: Install Osmium
         run: sudo apt-get update && sudo apt-get install -y osmium-tool
 
-      - name: Download monthly Geofabrik extract
+      - name: Download Geofabrik extract
         run: curl --fail --location --retry 3 --output finland-latest.osm.pbf https://download.geofabrik.de/europe/finland-latest.osm.pbf
 
       - name: Extract metropolitan OSM objects

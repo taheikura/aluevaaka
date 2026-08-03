@@ -14,10 +14,6 @@ on:
         type: string
         default: development
 
-  # Also schedulable for continuous active monitoring without a deploy
-  schedule:
-    - cron: "0 6,18 * * *"   # twice daily at 06:00 and 18:00 UTC
-
   # Manual trigger for ad-hoc checks
   workflow_dispatch:
     inputs:
@@ -28,7 +24,7 @@ on:
       environment:
         description: Environment
         required: true
-        default: production
+        default: development
         type: choice
         options: [production, development]
 
@@ -38,7 +34,7 @@ env:
 
 jobs:
   smoke-test:
-    name: Smoke test (${{ inputs.environment || 'production' }})
+    name: Smoke test (${{ inputs.environment || 'development' }})
     runs-on: ubuntu-latest
     permissions:
       id-token: write

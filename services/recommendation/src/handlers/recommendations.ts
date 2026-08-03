@@ -103,10 +103,16 @@ export async function handleMap(
     limit: dataset.municipalities.length,
   });
   const { south, west, north, east } = input.data.bounds;
+  const latitudePadding = (north - south) * 0.1;
+  const longitudePadding = (east - west) * 0.1;
+  const paddedSouth = Math.max(-90, south - latitudePadding);
+  const paddedNorth = Math.min(90, north + latitudePadding);
+  const paddedWest = Math.max(-180, west - longitudePadding);
+  const paddedEast = Math.min(180, east + longitudePadding);
   const visible = ranked
     .filter(({ coordinates }) => {
       const { lat, lng } = coordinates;
-      return lat >= south && lat <= north && lng >= west && lng <= east;
+      return lat >= paddedSouth && lat <= paddedNorth && lng >= paddedWest && lng <= paddedEast;
     })
     .map((result, index) => ({
       ...result,
