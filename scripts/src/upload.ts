@@ -9,7 +9,7 @@
  *
  * Run: DATA_BUCKET=my-bucket pnpm --filter @aluevaaka/scripts upload
  */
-import { readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -35,6 +35,14 @@ const CONTENT_TYPES: Record<string, string> = {
 
 async function upload(): Promise<void> {
   log.info('upload_start', { bucket: DATA_BUCKET, prefix: DATA_PREFIX });
+
+  try {
+    await access(LOCAL_DIR);
+  } catch {
+    throw new Error(
+      `Generated dataset directory does not exist: ${LOCAL_DIR}. Run the pipeline first.`,
+    );
+  }
 
   const files = (await readdir(LOCAL_DIR)).filter((f) => f.endsWith('.json'));
 

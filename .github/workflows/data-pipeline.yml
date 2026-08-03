@@ -75,7 +75,15 @@ jobs:
           echo "name=$BUCKET" >> "$GITHUB_OUTPUT"
 
       - name: Run data pipeline
-        run: pnpm --filter @aluevaaka/scripts pipeline 2>&1 | tee pipeline.log
+        run: |
+          set -o pipefail
+          pnpm --filter @aluevaaka/scripts pipeline 2>&1 | tee pipeline.log
+
+      - name: Verify generated dataset
+        run: |
+          test -f data/generated/municipalities.json
+          test -f data/generated/metrics.json
+          test -f data/generated/dataset-manifest.json
 
       - name: Upload pipeline report
         if: always()
