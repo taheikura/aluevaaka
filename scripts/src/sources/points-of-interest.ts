@@ -7,8 +7,8 @@ const SOURCE_URLS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const BOUNDS = { south: 60.05, west: 24.45, north: 60.42, east: 25.35 };
-const TILE_ROWS = 2;
-const TILE_COLUMNS = 2;
+const TILE_ROWS = 4;
+const TILE_COLUMNS = 4;
 const USER_AGENT = 'aluevaaka-data-pipeline/1.0 contact: github.com/taheikura/aluevaaka';
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 30;
 const REQUEST_TIMEOUT_MS = 35_000;
@@ -82,6 +82,7 @@ export async function fetchPointsOfInterest(): Promise<{
   points: PointOfInterest[];
   provenance: DataSourceProvenance;
   failedKinds: PointOfInterestKind[];
+  failedTiles: number[];
 }> {
   const tiles = buildTiles();
   log.info('fetch_points_of_interest_start', {
@@ -94,6 +95,7 @@ export async function fetchPointsOfInterest(): Promise<{
   const failedKinds: PointOfInterestKind[] = [];
   const seen = new Set<string>();
 
+  const failedTiles: number[] = [];
   for (const [tileIndex, tile] of tiles.entries()) {
     let data: OverpassResponse | undefined;
     let lastError: unknown;
@@ -130,6 +132,7 @@ export async function fetchPointsOfInterest(): Promise<{
       }
     }
     if (!data) {
+      failedTiles.push(tileIndex + 1);
       log.warn('points_of_interest_tile_unavailable', {
         tile: tileIndex + 1,
         error: String(lastError),
@@ -171,10 +174,12 @@ export async function fetchPointsOfInterest(): Promise<{
   log.info('fetch_points_of_interest_done', {
     count: points.length,
     failedKinds,
+    failedTiles,
   });
   return {
     points,
     failedKinds,
+    failedTiles,
     provenance: {
       name: 'OpenStreetMap — points of interest via Overpass API',
       url: SOURCE_URLS.join(', '),
