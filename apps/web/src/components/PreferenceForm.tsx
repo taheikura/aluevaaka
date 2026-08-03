@@ -20,11 +20,6 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     description: 'Vuokra- ja ostotaso suhteessa muihin pääkaupunkiseudun alueisiin',
   },
   {
-    key: 'healthcareAccess',
-    label: 'Terveydenhuolto',
-    description: 'Etäisyys terveyskeskukseen ja sairaanhoitopalvelut',
-  },
-  {
     key: 'transportConnectivity',
     label: 'Liikenne ja yhteydet',
     description: 'Julkinen liikenne, raideyhteydet ja laajakaista',

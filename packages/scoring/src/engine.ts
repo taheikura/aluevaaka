@@ -263,6 +263,9 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
     ...(preferences.natureProximity && preferences.natureProximity > 0
       ? { natureAndRecreation: 0 }
       : {}),
+    ...(preferences.healthcareProximity && preferences.healthcareProximity > 0
+      ? { healthcareAccess: 0 }
+      : {}),
     ...(preferences.groceryProximity && preferences.groceryProximity > 0 ? { services: 0 } : {}),
     ...(preferences.schoolProximity && preferences.schoolProximity > 0 ? { services: 0 } : {}),
   };

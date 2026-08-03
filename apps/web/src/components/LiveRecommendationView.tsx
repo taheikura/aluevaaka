@@ -12,10 +12,14 @@ const DEFAULT_PREFERENCES: Preferences = {
   housingAffordability: 0,
   healthcareAccess: 0,
   transportConnectivity: 0,
+  healthcareProximity: 0,
   natureAndRecreation: 0,
   economicOutlook: 0,
-  natureProximity: 0,
+  safety: 0,
   services: 0,
+  groceryProximity: 0,
+  schoolProximity: 0,
+  natureProximity: 0,
 };
 
 export function LiveRecommendationView() {
