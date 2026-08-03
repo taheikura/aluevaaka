@@ -47,9 +47,11 @@ const QUERIES: Record<PointOfInterestKind, string> = {
 export async function fetchPointsOfInterest(): Promise<{
   points: PointOfInterest[];
   provenance: DataSourceProvenance;
+  failedKinds: PointOfInterestKind[];
 }> {
   log.info('fetch_points_of_interest_start', { urls: SOURCE_URLS, kinds: Object.keys(QUERIES) });
   const points: PointOfInterest[] = [];
+  const failedKinds: PointOfInterestKind[] = [];
 
   for (const [kind, query] of Object.entries(QUERIES) as [PointOfInterestKind, string][]) {
     let data: OverpassResponse | undefined;
@@ -71,8 +73,14 @@ export async function fetchPointsOfInterest(): Promise<{
         log.warn('points_of_interest_source_failed', { kind, url, error: String(error) });
       }
     }
-    if (!data)
-      throw new Error(`All points-of-interest sources failed for ${kind}: ${String(lastError)}`);
+    if (!data) {
+      failedKinds.push(kind);
+      log.warn('points_of_interest_kind_unavailable', {
+        kind,
+        error: String(lastError),
+      });
+      continue;
+    }
 
     for (const element of data.elements) {
       const lat = element.lat ?? element.center?.lat;
@@ -82,9 +90,17 @@ export async function fetchPointsOfInterest(): Promise<{
     log.info('fetch_points_of_interest_kind_done', { kind, count: data.elements.length });
   }
 
-  log.info('fetch_points_of_interest_done', { count: points.length });
+  if (failedKinds.length === Object.keys(QUERIES).length) {
+    throw new Error(`All points-of-interest kinds failed: ${failedKinds.join(', ')}`);
+  }
+
+  log.info('fetch_points_of_interest_done', {
+    count: points.length,
+    failedKinds,
+  });
   return {
     points,
+    failedKinds,
     provenance: {
       name: 'OpenStreetMap — points of interest via Overpass API',
       url: SOURCE_URLS.join(', '),

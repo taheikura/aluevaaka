@@ -112,6 +112,12 @@ export async function generate(): Promise<void> {
 
   const report = buildReport(qualityResults);
 
+  if (pointsResult.failedKinds.length > 0) {
+    report.warnings.push(
+      `OpenStreetMap POI data was unavailable for: ${pointsResult.failedKinds.join(', ')}.`,
+    );
+  }
+
   for (const w of report.warnings) log.warn('quality_warning', { message: w });
   for (const e of report.errors) log.error('quality_error', { message: e });
 
