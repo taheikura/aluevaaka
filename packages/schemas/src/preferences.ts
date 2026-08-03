@@ -10,6 +10,7 @@ export const PreferencesSchema = z.object({
   transportConnectivity: z.number().min(0).max(1).default(0),
   natureAndRecreation: z.number().min(0).max(1).default(0),
   economicOutlook: z.number().min(0).max(1).default(0),
+  safety: z.number().min(0).max(1).default(0).optional(),
   services: z.number().min(0).max(1).default(0),
   healthcareProximity: z.number().min(0).max(1).default(0).optional(),
   groceryProximity: z.number().min(0).max(1).default(0).optional(),

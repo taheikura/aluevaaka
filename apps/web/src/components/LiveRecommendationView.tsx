@@ -4,7 +4,7 @@ import type {
   RecommendationResponse,
 } from '@aluevaaka/schemas';
 import { useEffect, useState } from 'react';
-import { postRecommendations } from '../api/client.js';
+import { getHealth, postRecommendations } from '../api/client.js';
 import { PreferenceForm } from './PreferenceForm.js';
 import { ResultMap } from './ResultMap.js';
 
@@ -21,6 +21,14 @@ export function LiveRecommendationView() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [data, setData] = useState<RecommendationResponse | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [health, setHealth] = useState<Awaited<ReturnType<typeof getHealth>> | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
+
+  useEffect(() => {
+    getHealth()
+      .then(setHealth)
+      .catch(() => setHealth(null));
+  }, []);
 
   const request: RecommendationRequest = {
     preferences,
@@ -48,15 +56,42 @@ export function LiveRecommendationView() {
 
   return (
     <div className="live-recommendation-layout">
-      <aside className="live-filters" aria-label="Aluehaun suodattimet">
-        <PreferenceForm
-          value={{ preferences, maxHousingCost: '', maxHealthcareKm: '' }}
-          onChange={updatePreferences}
-          isLoading={status === 'loading'}
-          showConstraints={false}
-        />
-        {status === 'loading' && <p role="status">Päivitetään pisteitä…</p>}
-        {status === 'error' && <p role="alert">Suositusten haku epäonnistui.</p>}
+      <aside
+        className={`live-filters${filtersOpen ? '' : ' is-collapsed'}`}
+        aria-label="Aluehaun suodattimet"
+      >
+        <button
+          type="button"
+          className="filters-toggle"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          Suodattimet {filtersOpen ? '▲' : '▼'}
+        </button>
+        {filtersOpen && (
+          <>
+            <PreferenceForm
+              value={{ preferences, maxHousingCost: '', maxHealthcareKm: '' }}
+              onChange={updatePreferences}
+              isLoading={status === 'loading'}
+              showConstraints={false}
+            />
+            {status === 'loading' && <p role="status">Päivitetään pisteitä…</p>}
+            {status === 'error' && <p role="alert">Suositusten haku epäonnistui.</p>}
+          </>
+        )}
+        {health && (
+          <p className="data-freshness">
+            Data päivitetty: {new Date(health.generatedAt ?? '').toLocaleString('fi-FI')}
+            {health.sources?.find((source) => source.name.includes('OpenStreetMap')) && (
+              <>
+                {' '}
+                · OSM:{' '}
+                {health.sources.find((source) => source.name.includes('OpenStreetMap'))?.fetchedAt}
+              </>
+            )}
+          </p>
+        )}
       </aside>
       <main className="live-results">
         <div className="live-map-panel">

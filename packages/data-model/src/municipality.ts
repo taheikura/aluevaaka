@@ -87,6 +87,8 @@ export interface MunicipalityMetrics {
   natureReserveCount?: number;
   /** Distance to nearest lake or coastline in km */
   distanceToWaterKm?: number;
+  /** Recorded crime rate per 1,000 residents, when available. */
+  crimeRatePer1000?: number;
 
   // Demographics and economic outlook
   /** Unemployment rate as a percentage */

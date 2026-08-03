@@ -24,6 +24,7 @@ export const CategoryScoresSchema = z.object({
   transportConnectivity: z.number().min(0).max(1).optional(),
   natureAndRecreation: z.number().min(0).max(1).optional(),
   economicOutlook: z.number().min(0).max(1).optional(),
+  safety: z.number().min(0).max(1).optional(),
   services: z.number().min(0).max(1).optional(),
 });
 
@@ -75,6 +76,16 @@ export const HealthResponseSchema = z.object({
   areaCount: z.number().int().nonnegative().optional(),
   metricCoverage: z.record(z.number().min(0).max(1)).optional(),
   qualityWarnings: z.array(z.string()).optional(),
+  generatedAt: z.string().optional(),
+  sources: z
+    .array(
+      z.object({
+        name: z.string(),
+        fetchedAt: z.string(),
+        publishedAt: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

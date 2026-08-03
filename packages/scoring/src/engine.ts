@@ -34,6 +34,7 @@ interface MetricRanges {
   distanceToParkKm?: { min: number; max: number };
   distanceToSchoolKm?: { min: number; max: number };
   distanceToLibraryKm?: { min: number; max: number };
+  crimeRatePer1000?: { min: number; max: number };
 }
 
 /** Build column ranges from the full dataset. Call once on dataset load. */
@@ -62,6 +63,7 @@ export function buildRanges(metrics: MunicipalityMetrics[]): MetricRanges {
   set('distanceToParkKm', columnRange(col('distanceToParkKm')));
   set('distanceToSchoolKm', columnRange(col('distanceToSchoolKm')));
   set('distanceToLibraryKm', columnRange(col('distanceToLibraryKm')));
+  set('crimeRatePer1000', columnRange(col('crimeRatePer1000')));
 
   return ranges;
 }
@@ -147,6 +149,12 @@ function scoreNature(m: MunicipalityMetrics, ranges: MetricRanges): number | und
   return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
 }
 
+function scoreSafety(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
+  const r = ranges.crimeRatePer1000;
+  if (!r) return undefined;
+  return normalizeLowerIsBetter(m.crimeRatePer1000, r.min, r.max);
+}
+
 // ---------------------------------------------------------------------------
 // Data completeness
 // ---------------------------------------------------------------------------
@@ -177,6 +185,14 @@ const CATEGORY_LABELS: Record<keyof CategoryScores, string> = {
   natureAndRecreation: 'Nature and recreation',
   economicOutlook: 'Economic outlook',
   services: 'Local services',
+  safety: 'Safety',
+};
+
+const PREFERENCE_CATEGORY: Record<string, keyof CategoryScores> = {
+  healthcareProximity: 'healthcareAccess',
+  groceryProximity: 'services',
+  schoolProximity: 'services',
+  natureProximity: 'natureAndRecreation',
 };
 
 function buildExplanation(
@@ -248,6 +264,7 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       transportConnectivity: scoreTransport(m, ranges) ?? undefined,
       natureAndRecreation: scoreNature(m, ranges) ?? undefined,
       economicOutlook: undefined,
+      safety: scoreSafety(m, ranges) ?? undefined,
     };
 
     // Weighted sum — skip categories with no score
@@ -261,6 +278,14 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       const w = normalizedWeights[key] ?? 0;
       if (w === 0) continue;
       weightedScore += w * (rawScore ?? 0.5);
+      appliedWeight += w;
+    }
+
+    for (const [preference, category] of Object.entries(PREFERENCE_CATEGORY)) {
+      const w = normalizedWeights[preference as keyof Preferences] ?? 0;
+      const rawScore = categoryScores[category];
+      if (w === 0 || rawScore === undefined) continue;
+      weightedScore += w * rawScore;
       appliedWeight += w;
     }
 

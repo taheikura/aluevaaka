@@ -17,6 +17,12 @@ export async function handleHealth(origin: string | undefined): Promise<HandlerR
       areaCount: dataset.manifest.areaCount,
       metricCoverage: dataset.manifest.metricCoverage,
       qualityWarnings: dataset.manifest.qualityWarnings,
+      generatedAt: dataset.manifest.generatedAt,
+      sources: dataset.manifest.sources.map(({ name, fetchedAt, publishedAt }) => ({
+        name,
+        fetchedAt,
+        ...(publishedAt ? { publishedAt } : {}),
+      })),
     };
     await publishDatasetMetrics({
       version: dataset.manifest.version,

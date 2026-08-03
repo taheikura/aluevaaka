@@ -124,7 +124,8 @@ export function ResultMap({ results }: Props) {
             `Terveydenhuolto: ${formatScore(r.categoryScores.healthcareAccess)}<br/>` +
             `Liikenne: ${formatScore(r.categoryScores.transportConnectivity)}<br/>` +
             `Luonto: ${formatScore(r.categoryScores.natureAndRecreation)}<br/>` +
-            `Palvelut: ${formatScore(r.categoryScores.services)}`,
+            `Palvelut: ${formatScore(r.categoryScores.services)}<br/>` +
+            `Turvallisuus: ${formatScore(r.categoryScores.safety)}`,
         );
       }
     });

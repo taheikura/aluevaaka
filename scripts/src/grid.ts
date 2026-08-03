@@ -61,7 +61,7 @@ export function generateGridCells(areas: MunicipalityBase[], resolution = 8): Gr
       cells.set(cell, {
         ...area,
         id: `h3-${cell}`,
-        nameFi: `Alue ${cell.slice(-6)}`,
+        nameFi: `${area.nameFi} (${area.postalCode ?? area.id})`,
         coordinates: { lat, lng },
         polygon: cellToBoundary(cell).map(([cellLat, cellLng]) => [cellLat, cellLng]),
         h3Index: cell,
