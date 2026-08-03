@@ -47,8 +47,7 @@ export function ResultMap({ results }: Props) {
         maxBounds: METROPOLITAN_BOUNDS,
         maxBoundsViscosity: 0.8,
         minZoom: 9,
-      });
-      mapRef.current.fitBounds(METROPOLITAN_BOUNDS, { padding: [24, 24] });
+      }).setView([60.2, 24.9], 10);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
           '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -57,6 +56,20 @@ export function ResultMap({ results }: Props) {
     }
 
     const map = mapRef.current;
+    const fitMapToBounds = (bounds: L.LatLngBounds, maxZoom?: number) => {
+      const container = containerRef.current;
+      if (!container || container.clientWidth === 0 || container.clientHeight === 0) return;
+      map.invalidateSize({ animate: false });
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom });
+    };
+
+    const initialBounds = L.latLngBounds(METROPOLITAN_BOUNDS as L.LatLngExpression[]);
+    const resizeObserver = new ResizeObserver(() => {
+      if (!mapRef.current) return;
+      fitMapToBounds(initialBounds, 11);
+    });
+    resizeObserver.observe(containerRef.current);
+    fitMapToBounds(initialBounds, 11);
 
     // Clear old markers and score overlays
     map.eachLayer((layer) => {
@@ -122,10 +135,11 @@ export function ResultMap({ results }: Props) {
     });
 
     const resultBounds = bounds.extend(METROPOLITAN_BOUNDS);
-    map.fitBounds(resultBounds, { padding: [40, 40], maxZoom: 11 });
+    fitMapToBounds(resultBounds, 11);
 
     return () => {
       // Do NOT destroy map on re-render — only on unmount
+      resizeObserver.disconnect();
     };
   }, [results]);
 
