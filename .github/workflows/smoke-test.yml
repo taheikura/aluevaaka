@@ -44,19 +44,19 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Resolve the Function URL if not passed directly (scheduled/manual runs)
       - name: Configure AWS credentials (OIDC)
         if: ${{ !inputs.function_url }}
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume target account role
         if: ${{ !inputs.function_url }}
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ inputs.environment == 'development' && secrets.AWS_ACCOUNT_ID_DEV || secrets.AWS_ACCOUNT_ID_PROD }}:role/OrganizationAccountAccessRole
           role-chaining: true
