@@ -60,15 +60,17 @@ export function ResultMap({ results }: Props) {
       }
     });
     resizeObserver.observe(containerRef.current);
-    requestAnimationFrame(() => {
-      if (mapRef.current) {
-        map.invalidateSize({ animate: false });
-        fitMapToBounds(initialBounds);
-      }
-    });
+    const initializeViewport = () => {
+      if (!mapRef.current) return;
+      mapRef.current.invalidateSize({ animate: false });
+      fitMapToBounds(initialBounds);
+    };
+    requestAnimationFrame(initializeViewport);
+    const viewportTimer = window.setTimeout(initializeViewport, 100);
 
     return () => {
       resizeObserver.disconnect();
+      window.clearTimeout(viewportTimer);
     };
   }, []);
 
@@ -76,7 +78,6 @@ export function ResultMap({ results }: Props) {
     const map = mapRef.current;
     if (!map) return;
 
-    // Clear old score overlays without changing the user's viewport.
     map.eachLayer((layer) => {
       if (layer instanceof L.CircleMarker || layer instanceof L.Polygon) map.removeLayer(layer);
     });

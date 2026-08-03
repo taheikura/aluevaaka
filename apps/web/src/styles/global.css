@@ -57,6 +57,12 @@ body {
   overflow: hidden;
   display: flex;
 }
+.home-page {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
 
 /* Header */
 .header {
@@ -248,7 +254,7 @@ body {
   z-index: 1000;
   top: 1rem;
   left: 1rem;
-  width: min(360px, calc(100% - 2rem));
+  width: min(460px, calc(100% - 2rem));
   max-height: calc(100vh - 5rem);
   overflow-y: auto;
   background: color-mix(in srgb, var(--color-surface) 94%, transparent);
@@ -267,15 +273,15 @@ body {
   margin-bottom: 0.65rem;
 }
 .live-filters .preference-row {
-  grid-template-columns: minmax(0, 1fr) 150px;
-  gap: 0.35rem 0.5rem;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 0.5rem 1rem;
   margin-bottom: 0.45rem;
 }
 .live-filters .slider-wrapper {
-  width: 150px;
+  width: 190px;
 }
 .live-filters .pref-desc {
-  display: none;
+  display: block;
 }
 .live-filters .preference-form fieldset:first-child {
   padding-top: 0;
@@ -334,7 +340,7 @@ body {
     max-height: none;
     top: 0.5rem;
     left: 0.5rem;
-    width: min(300px, calc(100% - 1rem));
+    width: min(420px, calc(100% - 1rem));
   }
   .live-map-panel {
     min-height: 60vh;
@@ -344,6 +350,9 @@ body {
   }
   .live-filters .slider-wrapper {
     width: 130px;
+  }
+  .live-filters .pref-desc {
+    display: none;
   }
 }
 
