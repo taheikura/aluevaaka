@@ -56,20 +56,28 @@ export function ResultMap({ results }: Props) {
     }
 
     const map = mapRef.current;
-    const fitMapToBounds = (bounds: L.LatLngBounds, maxZoom?: number) => {
+    const fitMapToBounds = (bounds: L.LatLngBounds) => {
       const container = containerRef.current;
       if (!container || container.clientWidth === 0 || container.clientHeight === 0) return;
       map.invalidateSize({ animate: false });
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom });
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
     };
 
     const initialBounds = L.latLngBounds(METROPOLITAN_BOUNDS as L.LatLngExpression[]);
     const resizeObserver = new ResizeObserver(() => {
       if (!mapRef.current) return;
-      fitMapToBounds(initialBounds, 11);
+      const container = containerRef.current;
+      if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+        map.invalidateSize({ animate: false });
+      }
     });
     resizeObserver.observe(containerRef.current);
-    fitMapToBounds(initialBounds, 11);
+    requestAnimationFrame(() => {
+      if (mapRef.current) {
+        map.invalidateSize({ animate: false });
+        fitMapToBounds(initialBounds);
+      }
+    });
 
     // Clear old markers and score overlays
     map.eachLayer((layer) => {
@@ -135,7 +143,7 @@ export function ResultMap({ results }: Props) {
     });
 
     const resultBounds = bounds.extend(METROPOLITAN_BOUNDS);
-    fitMapToBounds(resultBounds, 11);
+    fitMapToBounds(resultBounds);
 
     return () => {
       // Do NOT destroy map on re-render — only on unmount
