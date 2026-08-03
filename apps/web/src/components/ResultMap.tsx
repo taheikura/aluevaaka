@@ -11,10 +11,11 @@
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
-import type { RecommendationResult } from '@aluevaaka/schemas';
+import type { MapRequest, RecommendationResult } from '@aluevaaka/schemas';
 
 interface Props {
   results: RecommendationResult[];
+  onBoundsChange?: (bounds: MapRequest['bounds']) => void;
 }
 
 const METROPOLITAN_BOUNDS: L.LatLngBoundsExpression = [
@@ -22,9 +23,14 @@ const METROPOLITAN_BOUNDS: L.LatLngBoundsExpression = [
   [60.42, 25.35],
 ];
 
-export function ResultMap({ results }: Props) {
+export function ResultMap({ results, onBoundsChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const onBoundsChangeRef = useRef(onBoundsChange);
+
+  useEffect(() => {
+    onBoundsChangeRef.current = onBoundsChange;
+  }, [onBoundsChange]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -36,6 +42,16 @@ export function ResultMap({ results }: Props) {
         maxBoundsViscosity: 0.8,
         minZoom: 9,
       }).setView([60.2, 24.9], 10);
+      mapRef.current.on('moveend', () => {
+        const bounds = mapRef.current?.getBounds();
+        if (!bounds || !onBoundsChangeRef.current) return;
+        onBoundsChangeRef.current({
+          south: bounds.getSouth(),
+          west: bounds.getWest(),
+          north: bounds.getNorth(),
+          east: bounds.getEast(),
+        });
+      });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
           '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -96,7 +112,8 @@ export function ResultMap({ results }: Props) {
 
     validResults.forEach((r) => {
       const score = Math.max(0, Math.min(1, r.score));
-      const hue = Math.round(score * 120);
+      const hue = Math.round(score ** 0.65 * 120);
+      const strongMatch = score >= 0.8;
       const polygon = r.polygon?.filter(
         ([polygonLat, polygonLng]) =>
           Number.isFinite(polygonLat) &&
@@ -108,10 +125,10 @@ export function ResultMap({ results }: Props) {
       );
       if (polygon && polygon.length >= 3) {
         const cellPolygon = L.polygon(polygon, {
-          color: `hsl(${hue} 75% 35%)`,
-          fillColor: `hsl(${hue} 85% 50%)`,
-          fillOpacity: 0.28,
-          weight: 1,
+          color: strongMatch ? '#064e3b' : `hsl(${hue} 80% 30%)`,
+          fillColor: strongMatch ? '#10b981' : `hsl(${hue} 90% 48%)`,
+          fillOpacity: strongMatch ? 0.5 : 0.32,
+          weight: strongMatch ? 2 : 1,
         }).addTo(map);
         cellPolygon.bindPopup(
           `<strong>${escapeHtml(r.name)}</strong><br/>` +
@@ -119,6 +136,7 @@ export function ResultMap({ results }: Props) {
             `<hr>` +
             `<strong>Värin peruste</strong><br/>` +
             `Sopivuus: ${Math.round(score * 100)}/100<br/>` +
+            `${strongMatch ? '<strong>Hyvä osuma (vähintään 80 %)</strong><br/>' : ''}` +
             `Tietojen kattavuus: ${Math.round(r.dataCompleteness * 100)}%<br/>` +
             `Asuminen: ${formatScore(r.categoryScores.housingAffordability)}<br/>` +
             `Terveydenhuolto: ${formatScore(r.categoryScores.healthcareAccess)}<br/>` +

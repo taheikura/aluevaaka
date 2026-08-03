@@ -1,4 +1,8 @@
-import { RecommendationRequestSchema, type RecommendationResponse } from '@aluevaaka/schemas';
+import {
+  MapRequestSchema,
+  RecommendationRequestSchema,
+  type RecommendationResponse,
+} from '@aluevaaka/schemas';
 import { rankMunicipalities } from '@aluevaaka/scoring';
 import { config } from '../config.js';
 import { loadDataset } from '../dataset.js';
@@ -73,4 +77,41 @@ export async function handleRecommendations(
   };
 
   return ok(body, origin);
+}
+
+export async function handleMap(
+  rawBody: string | null | undefined,
+  origin: string | undefined,
+): Promise<HandlerResponse> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawBody ?? '{}');
+  } catch {
+    return error(400, { error: 'Invalid JSON', code: 'VALIDATION_ERROR' }, origin);
+  }
+  const input = MapRequestSchema.safeParse(parsed);
+  if (!input.success) {
+    return error(400, { error: 'Validation failed', code: 'VALIDATION_ERROR' }, origin);
+  }
+  const dataset = await loadDataset();
+  const ranked = rankMunicipalities({
+    municipalities: dataset.municipalities,
+    metrics: dataset.metrics,
+    ranges: dataset.ranges,
+    preferences: input.data.preferences,
+    constraints: input.data.constraints,
+    limit: dataset.municipalities.length,
+  });
+  const { south, west, north, east } = input.data.bounds;
+  const visible = ranked
+    .filter(({ coordinates }) => {
+      const { lat, lng } = coordinates;
+      return lat >= south && lat <= north && lng >= west && lng <= east;
+    })
+    .map((result, index) => ({
+      ...result,
+      rank: index + 1,
+      isGoodMatch: result.score >= 0.8,
+    }));
+  return ok({ datasetVersion: dataset.manifest.version, results: visible }, origin);
 }

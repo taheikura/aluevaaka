@@ -8,7 +8,7 @@
  */
 import type { Context, LambdaFunctionURLEvent } from 'aws-lambda';
 import { handleHealth } from './handlers/health.js';
-import { handleRecommendations } from './handlers/recommendations.js';
+import { handleMap, handleRecommendations } from './handlers/recommendations.js';
 import { clearRequestId, logger, setRequestId } from './logger.js';
 import { error, type HandlerResponse, noContent } from './response.js';
 
@@ -39,6 +39,13 @@ export const handler = async (
         ? Buffer.from(event.body ?? '', 'base64').toString('utf-8')
         : (event.body ?? null);
       return await handleRecommendations(body, origin);
+    }
+
+    if (method === 'POST' && path === '/map') {
+      const body = event.isBase64Encoded
+        ? Buffer.from(event.body ?? '', 'base64').toString('utf-8')
+        : (event.body ?? null);
+      return await handleMap(body, origin);
     }
 
     return error(404, { error: 'Not found', code: 'VALIDATION_ERROR' }, origin);

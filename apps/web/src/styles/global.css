@@ -348,6 +348,30 @@ body {
   background: color-mix(in srgb, var(--color-surface) 92%, transparent);
   border-radius: var(--radius);
 }
+.map-legend {
+  position: absolute;
+  z-index: 1000;
+  right: 1rem;
+  top: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  max-width: min(420px, calc(100% - 2rem));
+  padding: 0.45rem 0.65rem;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+}
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.map-legend-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 2px;
+}
 
 .live-results .results-list {
   display: none;

@@ -1,10 +1,6 @@
-import type {
-  Preferences,
-  RecommendationRequest,
-  RecommendationResponse,
-} from '@aluevaaka/schemas';
+import type { MapRequest, MapResponse, Preferences } from '@aluevaaka/schemas';
 import { useEffect, useState } from 'react';
-import { getHealth, postRecommendations } from '../api/client.js';
+import { getHealth, postMap } from '../api/client.js';
 import { PreferenceForm } from './PreferenceForm.js';
 import { ResultMap } from './ResultMap.js';
 
@@ -24,10 +20,11 @@ const DEFAULT_PREFERENCES: Preferences = {
 
 export function LiveRecommendationView() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
-  const [data, setData] = useState<RecommendationResponse | null>(null);
+  const [data, setData] = useState<MapResponse | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [health, setHealth] = useState<Awaited<ReturnType<typeof getHealth>> | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [mapBounds, setMapBounds] = useState<MapRequest['bounds'] | null>(null);
 
   useEffect(() => {
     getHealth()
@@ -35,29 +32,31 @@ export function LiveRecommendationView() {
       .catch(() => setHealth(null));
   }, []);
 
-  const request: RecommendationRequest = {
-    preferences,
-    constraints: {},
-    limit: 2000,
+  const updatePreferences = (next: { preferences: Preferences }) => {
+    setPreferences(next.preferences);
+  };
+
+  const loadMap = async (bounds: MapRequest['bounds']) => {
+    setMapBounds(bounds);
+    setStatus('loading');
+    if (!Object.values(preferences).some((value) => (value ?? 0) > 0)) {
+      setStatus('idle');
+      return;
+    }
+    try {
+      const response = await postMap({ preferences, constraints: {}, bounds });
+      setData(response);
+      setStatus('idle');
+    } catch {
+      setStatus('error');
+    }
   };
 
   useEffect(() => {
-    if (!Object.values(preferences).some((value) => (value ?? 0) > 0)) return;
-    const timer = window.setTimeout(async () => {
-      setStatus('loading');
-      try {
-        setData(await postRecommendations(request));
-        setStatus('idle');
-      } catch {
-        setStatus('error');
-      }
-    }, 300);
+    if (!mapBounds) return;
+    const timer = window.setTimeout(() => void loadMap(mapBounds), 250);
     return () => window.clearTimeout(timer);
-  }, [preferences]);
-
-  const updatePreferences = (next: RecommendationRequest) => {
-    setPreferences(next.preferences);
-  };
+  }, [preferences, mapBounds]);
 
   return (
     <div className="live-recommendation-layout">
@@ -100,7 +99,21 @@ export function LiveRecommendationView() {
       </aside>
       <main className="live-results">
         <div className="live-map-panel">
-          <ResultMap results={data?.results ?? []} />
+          <ResultMap results={data?.results ?? []} onBoundsChange={loadMap} />
+          <div className="map-legend" role="note" aria-label="Sopivuuskartan selite">
+            <span className="map-legend-item">
+              <span className="map-legend-swatch" style={{ background: '#10b981' }} />
+              Hyvä osuma ≥ 80 %
+            </span>
+            <span className="map-legend-item">
+              <span className="map-legend-swatch" style={{ background: '#f59e0b' }} />
+              50–79 %
+            </span>
+            <span className="map-legend-item">
+              <span className="map-legend-swatch" style={{ background: '#ef4444' }} />
+              alle 50 %
+            </span>
+          </div>
         </div>
         <p className="live-result-summary" role="status">
           {data

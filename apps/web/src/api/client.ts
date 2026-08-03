@@ -7,6 +7,9 @@
 import {
   type HealthResponse,
   HealthResponseSchema,
+  type MapRequest,
+  type MapResponse,
+  MapResponseSchema,
   type RecommendationRequest,
   type RecommendationResponse,
   RecommendationResponseSchema,
@@ -62,4 +65,8 @@ export async function postRecommendations(
     { method: 'POST', body: JSON.stringify(request) },
     RecommendationResponseSchema,
   );
+}
+
+export async function postMap(request: MapRequest): Promise<MapResponse> {
+  return fetchApi('/map', { method: 'POST', body: JSON.stringify(request) }, MapResponseSchema);
 }

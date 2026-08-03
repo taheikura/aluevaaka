@@ -65,6 +65,31 @@ export const RecommendationResponseSchema = z.object({
 
 export type RecommendationResponse = z.infer<typeof RecommendationResponseSchema>;
 
+export const MapRequestSchema = z.object({
+  preferences: PreferencesSchema,
+  constraints: ConstraintsSchema,
+  bounds: z.object({
+    south: z.number().min(-90).max(90),
+    west: z.number().min(-180).max(180),
+    north: z.number().min(-90).max(90),
+    east: z.number().min(-180).max(180),
+  }),
+});
+
+export type MapRequest = z.infer<typeof MapRequestSchema>;
+
+export const MapResultSchema = RecommendationResultSchema.extend({
+  rank: z.number().int().positive(),
+  isGoodMatch: z.boolean(),
+});
+
+export const MapResponseSchema = z.object({
+  datasetVersion: z.string(),
+  results: z.array(MapResultSchema),
+});
+
+export type MapResponse = z.infer<typeof MapResponseSchema>;
+
 // ---------------------------------------------------------------------------
 // Health check
 // ---------------------------------------------------------------------------
