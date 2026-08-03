@@ -120,93 +120,93 @@ export function PreferenceForm({
 
   return (
     <form onSubmit={handleSubmit} className="preference-form" noValidate>
-      {showConstraints && (
-        <fieldset>
-          <legend>Mitä arvostat asuinpaikassasi?</legend>
-          <p className="form-hint">
-            Siirrä liukusäädin nollasta sadaan sen mukaan, kuinka tärkeä asia on sinulle.
-            Painotukset normalisoidaan automaattisesti.
-          </p>
-
-          {CATEGORIES.map(({ key, label, description }) => (
-            <div key={key} className="preference-row">
-              <label htmlFor={`pref-${key}`}>
-                <span className="pref-label">{label}</span>
-                <span className="pref-desc">{description}</span>
-              </label>
-              <div className="slider-wrapper">
-                <input
-                  id={`pref-${key}`}
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={Math.round((preferences[key] ?? 0) * 100)}
-                  onChange={(e) => handleSlider(key, Number(e.target.value))}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round((preferences[key] ?? 0) * 100)}
-                />
-                <output htmlFor={`pref-${key}`} className="slider-value">
-                  {Math.round((preferences[key] ?? 0) * 100)}
-                </output>
-              </div>
-            </div>
-          ))}
-        </fieldset>
-      )}
-
       <fieldset>
-        <legend>Pakolliset ehdot (valinnainen)</legend>
+        <legend>Mitä arvostat asuinpaikassasi?</legend>
         <p className="form-hint">
-          Alueet, jotka eivät täytä ehtoja, poistetaan tuloksista kokonaan. Ilman ehtoja näet
-          parhaat saatavilla olevat vaihtoehdot.
+          Siirrä liukusäädin nollasta sadaan sen mukaan, kuinka tärkeä asia on sinulle. Painotukset
+          normalisoidaan automaattisesti.
         </p>
 
-        <div className="constraint-row">
-          <label htmlFor="max-rent">Enimmäisvuokra (€/kk)</label>
-          <input
-            id="max-rent"
-            type="number"
-            min={300}
-            max={5000}
-            step={50}
-            placeholder="esim. 900"
-            value={maxHousingCost}
-            onChange={(e) => {
-              if (onChange)
-                onChange({
-                  preferences,
-                  constraints: { maximumHousingCostEur: Number(e.target.value) },
-                  limit: 10,
-                });
-              else setLocalMaxHousingCost(e.target.value);
-            }}
-          />
-        </div>
-
-        <div className="constraint-row">
-          <label htmlFor="max-healthcare">Enimmäisetäisyys terveyskeskukseen (km)</label>
-          <input
-            id="max-healthcare"
-            type="number"
-            min={1}
-            max={200}
-            step={5}
-            placeholder="esim. 30"
-            value={maxHealthcareKm}
-            onChange={(e) => {
-              if (onChange)
-                onChange({
-                  preferences,
-                  constraints: { maximumDistanceToHealthcareKm: Number(e.target.value) },
-                  limit: 10,
-                });
-              else setLocalMaxHealthcareKm(e.target.value);
-            }}
-          />
-        </div>
+        {CATEGORIES.map(({ key, label, description }) => (
+          <div key={key} className="preference-row">
+            <label htmlFor={`pref-${key}`}>
+              <span className="pref-label">{label}</span>
+              <span className="pref-desc">{description}</span>
+            </label>
+            <div className="slider-wrapper">
+              <input
+                id={`pref-${key}`}
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round((preferences[key] ?? 0) * 100)}
+                onChange={(e) => handleSlider(key, Number(e.target.value))}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round((preferences[key] ?? 0) * 100)}
+              />
+              <output htmlFor={`pref-${key}`} className="slider-value">
+                {Math.round((preferences[key] ?? 0) * 100)}
+              </output>
+            </div>
+          </div>
+        ))}
       </fieldset>
+
+      {showConstraints && (
+        <fieldset>
+          <legend>Pakolliset ehdot (valinnainen)</legend>
+          <p className="form-hint">
+            Alueet, jotka eivät täytä ehtoja, poistetaan tuloksista kokonaan. Ilman ehtoja näet
+            parhaat saatavilla olevat vaihtoehdot.
+          </p>
+
+          <div className="constraint-row">
+            <label htmlFor="max-rent">Enimmäisvuokra (€/kk)</label>
+            <input
+              id="max-rent"
+              type="number"
+              min={300}
+              max={5000}
+              step={50}
+              placeholder="esim. 900"
+              value={maxHousingCost}
+              onChange={(e) => {
+                if (onChange)
+                  onChange({
+                    preferences,
+                    constraints: { maximumHousingCostEur: Number(e.target.value) },
+                    limit: 10,
+                  });
+                else setLocalMaxHousingCost(e.target.value);
+              }}
+            />
+          </div>
+
+          <div className="constraint-row">
+            <label htmlFor="max-healthcare">Enimmäisetäisyys terveyskeskukseen (km)</label>
+            <input
+              id="max-healthcare"
+              type="number"
+              min={1}
+              max={200}
+              step={5}
+              placeholder="esim. 30"
+              value={maxHealthcareKm}
+              onChange={(e) => {
+                if (onChange)
+                  onChange({
+                    preferences,
+                    constraints: { maximumDistanceToHealthcareKm: Number(e.target.value) },
+                    limit: 10,
+                  });
+                else setLocalMaxHealthcareKm(e.target.value);
+              }}
+            />
+          </div>
+        </fieldset>
+      )}
 
       <button
         type="submit"
