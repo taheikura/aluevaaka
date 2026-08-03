@@ -13,6 +13,10 @@ services/recommendation/lambda.zip
 
 # generated data (never commit generated artifacts)
 data/generated/
+data/raw/*
+!data/raw/osm-poi.json
+*.osm.pbf
+*.osm.pbf:Zone.Identifier
 
 # environment
 .env

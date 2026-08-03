@@ -7,6 +7,8 @@
     "pipeline": "tsx src/pipeline.ts",
     "validate": "tsx src/validate.ts",
     "upload": "tsx src/upload.ts",
+    "extract-osm-poi": "tsx src/extract-osm-poi.ts",
+    "upload-poi-snapshot": "tsx src/upload-poi-snapshot.ts",
     "seed:sample": "tsx src/seed-sample.ts"
   },
   "dependencies": {

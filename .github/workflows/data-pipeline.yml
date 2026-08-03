@@ -1,9 +1,9 @@
 name: Data pipeline
 
 on:
-  # Run weekly to keep datasets fresh
+  # Run monthly; OSM changes are refreshed independently from application deploys.
   schedule:
-    - cron: "0 3 * * 1"  # Monday 03:00 UTC
+    - cron: "0 3 1 * *"  # First day of each month, 03:00 UTC
 
   # Trigger manually when source data is known to have updated
   workflow_dispatch:
@@ -15,13 +15,6 @@ on:
         type: choice
         options: [production, development]
 
-  push:
-    branches: [main]
-    paths:
-      - 'scripts/src/sources/**'
-      - 'scripts/src/grid.ts'
-      - 'scripts/src/generate.ts'
-      - 'packages/data-model/**'
 
 env:
   NODE_VERSION: "22"
@@ -49,6 +42,24 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Install Osmium
+        run: sudo apt-get update && sudo apt-get install -y osmium-tool
+
+      - name: Download monthly Geofabrik extract
+        run: curl --fail --location --retry 3 --output finland-latest.osm.pbf https://download.geofabrik.de/europe/finland-latest.osm.pbf
+
+      - name: Extract metropolitan OSM objects
+        run: |
+          osmium extract -b 24.45,60.05,25.35,60.42 finland-latest.osm.pbf -o capital.pbf
+          osmium tags-filter capital.pbf \
+            nwr/amenity=school nwr/amenity=library \
+            nwr/amenity=hospital nwr/amenity=clinic nwr/amenity=doctors nwr/amenity=pharmacy \
+            nwr/public_transport=platform nwr/highway=bus_stop \
+            nwr/shop=supermarket nwr/leisure=park nwr/leisure=nature_reserve \
+            -o capital-poi.pbf
+          osmium export capital-poi.pbf -o data/raw/osm-poi.geojson
+          pnpm --filter @aluevaaka/scripts extract-osm-poi data/raw/osm-poi.geojson data/raw/osm-poi.json
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -74,10 +85,22 @@ jobs:
             --output text)
           echo "name=$BUCKET" >> "$GITHUB_OUTPUT"
 
+      - name: Upload OSM snapshot to S3
+        run: pnpm --filter @aluevaaka/scripts upload-poi-snapshot
+        env:
+          DATA_BUCKET: ${{ steps.bucket.outputs.name }}
+          POI_SNAPSHOT_KEY: data/raw/osm-poi.json
+          POI_SNAPSHOT_PATH: data/raw/osm-poi.json
+          AWS_REGION: ${{ env.AWS_REGION }}
+
       - name: Run data pipeline
         run: |
           set -o pipefail
           pnpm --filter @aluevaaka/scripts pipeline 2>&1 | tee pipeline.log
+        env:
+          POI_SNAPSHOT_BUCKET: ${{ steps.bucket.outputs.name }}
+          POI_SNAPSHOT_KEY: data/raw/osm-poi.json
+          AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Verify generated dataset
         run: |

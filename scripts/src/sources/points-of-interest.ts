@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import type { DataSourceProvenance } from '@aluevaaka/data-model';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { fetchJson, HttpError } from '../lib/http.js';
 import { log } from '../lib/logger.js';
 
@@ -14,7 +17,11 @@ const OVERPASS_QUERY_TIMEOUT_SECONDS = 60;
 const REQUEST_TIMEOUT_MS = 75_000;
 const REQUEST_DELAY_MS = 15_000;
 const RETRY_AFTER_FALLBACK_MS = 60_000;
+const SNAPSHOT_PATH = fileURLToPath(new URL('../../../data/raw/osm-poi.json', import.meta.url));
 const MAX_TILE_SUBDIVISION_DEPTH = 2;
+const SNAPSHOT_BUCKET = process.env.POI_SNAPSHOT_BUCKET;
+const SNAPSHOT_KEY = process.env.POI_SNAPSHOT_KEY ?? 'data/raw/osm-poi.json';
+const AWS_REGION = process.env.AWS_REGION ?? 'eu-north-1';
 
 interface OverpassElement {
   id?: number;
@@ -41,6 +48,59 @@ export interface PointOfInterest {
   kind: PointOfInterestKind;
   lat: number;
   lng: number;
+}
+
+async function loadSnapshot(): Promise<
+  { points: PointOfInterest[]; provenance: DataSourceProvenance } | undefined
+> {
+  if (SNAPSHOT_BUCKET) {
+    try {
+      const s3 = new S3Client({ region: AWS_REGION });
+      const response = await s3.send(
+        new GetObjectCommand({ Bucket: SNAPSHOT_BUCKET, Key: SNAPSHOT_KEY }),
+      );
+      const text = await response.Body?.transformToString('utf8');
+      if (!text) throw new Error('Empty POI snapshot response');
+      const points = JSON.parse(text) as PointOfInterest[];
+      log.info('fetch_points_of_interest_s3_snapshot_loaded', {
+        bucket: SNAPSHOT_BUCKET,
+        key: SNAPSHOT_KEY,
+        count: points.length,
+      });
+      return {
+        points,
+        provenance: {
+          name: 'OpenStreetMap — Geofabrik Finland extract, S3 snapshot',
+          url: 'https://download.geofabrik.de/europe/finland.html',
+          license: 'OpenStreetMap ODbL',
+          fetchedAt: new Date().toISOString().slice(0, 10),
+          transformVersion: 'geofabrik-pbf-1',
+        },
+      };
+    } catch (error) {
+      log.warn('fetch_points_of_interest_s3_snapshot_failed', {
+        bucket: SNAPSHOT_BUCKET,
+        key: SNAPSHOT_KEY,
+        error: String(error),
+      });
+    }
+  }
+
+  try {
+    const points = JSON.parse(await readFile(SNAPSHOT_PATH, 'utf8')) as PointOfInterest[];
+    return {
+      points,
+      provenance: {
+        name: 'OpenStreetMap — Geofabrik Finland extract, metropolitan snapshot',
+        url: 'https://download.geofabrik.de/europe/finland.html',
+        license: 'OpenStreetMap ODbL',
+        fetchedAt: new Date().toISOString().slice(0, 10),
+        transformVersion: 'geofabrik-pbf-1',
+      },
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function buildTiles(): string[] {
@@ -112,6 +172,15 @@ export async function fetchPointsOfInterest(): Promise<{
   failedKinds: PointOfInterestKind[];
   failedTiles: number[];
 }> {
+  const snapshot = await loadSnapshot();
+  if (snapshot) {
+    log.info('fetch_points_of_interest_snapshot_loaded', {
+      path: SNAPSHOT_PATH,
+      count: snapshot.points.length,
+    });
+    return { ...snapshot, failedKinds: [], failedTiles: [] };
+  }
+
   const tiles = buildTiles();
   log.info('fetch_points_of_interest_start', {
     urls: SOURCE_URLS,

@@ -94,7 +94,7 @@ jobs:
   dataset:
     name: Generate dataset
     needs: setup
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[refresh-data]') }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
