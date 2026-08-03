@@ -94,6 +94,7 @@ jobs:
   dataset:
     name: Generate dataset
     needs: setup
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[refresh-data]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -210,6 +211,7 @@ jobs:
   deploy-app:
     name: Deploy application
     needs: [setup, build, dataset, deploy-infra]
+    if: ${{ always() && needs.deploy-infra.result == 'success' && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     environment: ${{ needs.setup.outputs.env_name }}
     permissions:
@@ -303,9 +305,18 @@ jobs:
         with:
           name: generated-data-${{ github.sha }}
           path: data/generated/
+        continue-on-error: true
+
+      - name: Verify dataset is available
+        run: |
+          if [ ! -f data/generated/dataset-manifest.json ]; then
+            echo "No dataset artifact was generated. This deployment must reuse the existing S3 dataset."
+            exit 0
+          fi
 
       - name: Upload dataset to S3
         run: pnpm --filter @aluevaaka/scripts upload
+        if: ${{ hashFiles('data/generated/dataset-manifest.json') != '' }}
         env:
           DATA_BUCKET: ${{ steps.get-outputs.outputs.data_bucket }}
           DATA_PREFIX: data/generated
