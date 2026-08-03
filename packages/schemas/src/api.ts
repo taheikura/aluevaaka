@@ -8,8 +8,8 @@ import { ConstraintsSchema, PreferencesSchema } from './preferences.js';
 export const RecommendationRequestSchema = z.object({
   preferences: PreferencesSchema,
   constraints: ConstraintsSchema,
-  /** Maximum number of results to return, 1–50 */
-  limit: z.number().int().min(1).max(50).default(10),
+  /** Maximum number of results to return, 1–2000 */
+  limit: z.number().int().min(1).max(2000).default(10),
 });
 
 export type RecommendationRequest = z.infer<typeof RecommendationRequestSchema>;

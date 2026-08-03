@@ -6,7 +6,6 @@ import type {
 import { useEffect, useState } from 'react';
 import { postRecommendations } from '../api/client.js';
 import { PreferenceForm } from './PreferenceForm.js';
-import { ResultCard } from './ResultCard.js';
 import { ResultMap } from './ResultMap.js';
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -26,7 +25,7 @@ export function LiveRecommendationView() {
   const request: RecommendationRequest = {
     preferences,
     constraints: {},
-    limit: 50,
+    limit: 2000,
   };
 
   useEffect(() => {
@@ -68,11 +67,6 @@ export function LiveRecommendationView() {
             ? `${data.results.length} aluetta vertailussa`
             : 'Säädä painotuksia nähdäksesi alueet'}
         </p>
-        <section className="results-list" aria-label="Aluelistaus">
-          {(data?.results ?? []).slice(0, 10).map((result, index) => (
-            <ResultCard key={result.municipalityId} result={result} rank={index + 1} />
-          ))}
-        </section>
       </main>
     </div>
   );
