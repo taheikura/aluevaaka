@@ -10,6 +10,7 @@ interface Props {
   onChange?: (request: RecommendationRequest) => void;
   onSubmit?: (request: RecommendationRequest) => void;
   isLoading: boolean;
+  showConstraints?: boolean;
 }
 
 const CATEGORIES: { key: keyof Preferences; label: string; description: string }[] = [
@@ -78,7 +79,13 @@ const DEFAULT_PREFERENCES: Preferences = {
   natureProximity: 0,
 };
 
-export function PreferenceForm({ value, onChange, onSubmit, isLoading }: Props) {
+export function PreferenceForm({
+  value,
+  onChange,
+  onSubmit,
+  isLoading,
+  showConstraints = true,
+}: Props) {
   const [localPreferences, setLocalPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [localMaxHousingCost, setLocalMaxHousingCost] = useState('');
   const [localMaxHealthcareKm, setLocalMaxHealthcareKm] = useState('');
@@ -113,39 +120,41 @@ export function PreferenceForm({ value, onChange, onSubmit, isLoading }: Props) 
 
   return (
     <form onSubmit={handleSubmit} className="preference-form" noValidate>
-      <fieldset>
-        <legend>Mitä arvostat asuinpaikassasi?</legend>
-        <p className="form-hint">
-          Siirrä liukusäädin nollasta sadaan sen mukaan, kuinka tärkeä asia on sinulle. Painotukset
-          normalisoidaan automaattisesti.
-        </p>
+      {showConstraints && (
+        <fieldset>
+          <legend>Mitä arvostat asuinpaikassasi?</legend>
+          <p className="form-hint">
+            Siirrä liukusäädin nollasta sadaan sen mukaan, kuinka tärkeä asia on sinulle.
+            Painotukset normalisoidaan automaattisesti.
+          </p>
 
-        {CATEGORIES.map(({ key, label, description }) => (
-          <div key={key} className="preference-row">
-            <label htmlFor={`pref-${key}`}>
-              <span className="pref-label">{label}</span>
-              <span className="pref-desc">{description}</span>
-            </label>
-            <div className="slider-wrapper">
-              <input
-                id={`pref-${key}`}
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={Math.round((preferences[key] ?? 0) * 100)}
-                onChange={(e) => handleSlider(key, Number(e.target.value))}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round((preferences[key] ?? 0) * 100)}
-              />
-              <output htmlFor={`pref-${key}`} className="slider-value">
-                {Math.round((preferences[key] ?? 0) * 100)}
-              </output>
+          {CATEGORIES.map(({ key, label, description }) => (
+            <div key={key} className="preference-row">
+              <label htmlFor={`pref-${key}`}>
+                <span className="pref-label">{label}</span>
+                <span className="pref-desc">{description}</span>
+              </label>
+              <div className="slider-wrapper">
+                <input
+                  id={`pref-${key}`}
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={Math.round((preferences[key] ?? 0) * 100)}
+                  onChange={(e) => handleSlider(key, Number(e.target.value))}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round((preferences[key] ?? 0) * 100)}
+                />
+                <output htmlFor={`pref-${key}`} className="slider-value">
+                  {Math.round((preferences[key] ?? 0) * 100)}
+                </output>
+              </div>
             </div>
-          </div>
-        ))}
-      </fieldset>
+          ))}
+        </fieldset>
+      )}
 
       <fieldset>
         <legend>Pakolliset ehdot (valinnainen)</legend>
