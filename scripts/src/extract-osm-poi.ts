@@ -25,8 +25,9 @@ interface PoiRecord {
   osmId?: string;
 }
 
-const input = resolve(process.argv[2] ?? 'data/raw/osm-poi.geojson');
-const output = resolve(process.argv[3] ?? 'data/raw/osm-poi.json');
+const workspaceRoot = resolve(process.cwd(), '..');
+const input = resolve(process.argv[2] ?? resolve(workspaceRoot, 'data/raw/osm-poi.geojson'));
+const output = resolve(process.argv[3] ?? resolve(workspaceRoot, 'data/raw/osm-poi.json'));
 
 function kindFor(properties: Record<string, unknown>): Kind | undefined {
   const amenity = String(properties.amenity ?? '');

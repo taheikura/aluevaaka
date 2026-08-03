@@ -63,8 +63,11 @@ jobs:
             nwr/public_transport=platform nwr/highway=bus_stop \
             nwr/shop=supermarket nwr/leisure=park nwr/leisure=nature_reserve \
             -o capital-poi.pbf
+          mkdir -p data/raw
           osmium export capital-poi.pbf -o data/raw/osm-poi.geojson
-          pnpm --filter @aluevaaka/scripts extract-osm-poi data/raw/osm-poi.geojson data/raw/osm-poi.json
+          pnpm --filter @aluevaaka/scripts extract-osm-poi \
+            "$GITHUB_WORKSPACE/data/raw/osm-poi.geojson" \
+            "$GITHUB_WORKSPACE/data/raw/osm-poi.json"
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
