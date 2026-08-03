@@ -15,6 +15,14 @@ on:
         type: choice
         options: [production, development]
 
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/src/sources/**'
+      - 'scripts/src/grid.ts'
+      - 'scripts/src/generate.ts'
+      - 'packages/data-model/**'
+
 env:
   NODE_VERSION: "22"
   PNPM_VERSION: "9"
