@@ -63,9 +63,7 @@ export function ResultMap({ results }: Props) {
       map.fitBounds(bounds, { padding: [40, 40], maxZoom });
     };
 
-    const initialBounds = L.latLngBounds(
-      METROPOLITAN_BOUNDS as L.LatLngExpression[],
-    );
+    const initialBounds = L.latLngBounds(METROPOLITAN_BOUNDS as L.LatLngExpression[]);
     const resizeObserver = new ResizeObserver(() => {
       if (!mapRef.current) return;
       fitMapToBounds(initialBounds, 11);
