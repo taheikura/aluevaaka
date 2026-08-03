@@ -50,6 +50,7 @@ body {
 .main-content:has(.live-recommendation-layout) {
   max-width: none;
   height: calc(100vh - 62px);
+  min-height: 0;
   padding: 0;
 }
 
@@ -233,6 +234,7 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 420px;
 }
 .live-filters {
   position: absolute;
@@ -258,11 +260,12 @@ body {
 .live-results {
   width: 100%;
   height: 100%;
+  min-height: 420px;
   position: relative;
 }
 .live-map-panel {
   height: 100%;
-  min-height: 0;
+  min-height: 420px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -296,7 +299,7 @@ body {
     width: min(300px, calc(100% - 1rem));
   }
   .live-map-panel {
-    min-height: 0;
+    min-height: 60vh;
   }
 }
 
