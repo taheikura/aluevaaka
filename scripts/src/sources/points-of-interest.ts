@@ -12,6 +12,8 @@ const TILE_COLUMNS = 4;
 const USER_AGENT = 'aluevaaka-data-pipeline/1.0 contact: github.com/taheikura/aluevaaka';
 const OVERPASS_QUERY_TIMEOUT_SECONDS = 60;
 const REQUEST_TIMEOUT_MS = 75_000;
+const REQUEST_DELAY_MS = 15_000;
+const RETRY_AFTER_FALLBACK_MS = 60_000;
 
 interface OverpassElement {
   id?: number;
@@ -78,6 +80,19 @@ function kindForElement(element: OverpassElement): PointOfInterestKind | undefin
   return undefined;
 }
 
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function retryAfterMilliseconds(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return undefined;
+  return Math.max(0, timestamp - Date.now());
+}
+
 export async function fetchPointsOfInterest(): Promise<{
   points: PointOfInterest[];
   provenance: DataSourceProvenance;
@@ -97,6 +112,7 @@ export async function fetchPointsOfInterest(): Promise<{
 
   const failedTiles: number[] = [];
   for (const [tileIndex, tile] of tiles.entries()) {
+    if (tileIndex > 0) await delay(REQUEST_DELAY_MS);
     let data: OverpassResponse | undefined;
     let lastError: unknown;
     for (const url of SOURCE_URLS) {
@@ -128,6 +144,14 @@ export async function fetchPointsOfInterest(): Promise<{
             url,
             retryAfter: error.retryAfter,
           });
+        }
+        if (error instanceof HttpError && error.status === 429) {
+          const waitMs = retryAfterMilliseconds(error.retryAfter) ?? RETRY_AFTER_FALLBACK_MS;
+          log.info('points_of_interest_rate_limit_wait', {
+            tile: tileIndex + 1,
+            waitMs,
+          });
+          await delay(waitMs);
         }
       }
     }
