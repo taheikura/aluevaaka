@@ -24,13 +24,6 @@ export function Layout() {
       <main className="main-content">
         <Outlet />
       </main>
-
-      <footer className="footer">
-        <p>
-          Aluevaaka käyttää avoimia tietoaineistoja. Tulokset ovat suuntaa antavia.{' '}
-          <NavLink to="/about">Lue lisää</NavLink>
-        </p>
-      </footer>
     </div>
   );
 }

@@ -54,6 +54,7 @@ export function LiveRecommendationView() {
           value={{ preferences, maxHousingCost: '', maxHealthcareKm: '' }}
           onChange={updatePreferences}
           isLoading={status === 'loading'}
+          showConstraints={false}
         />
         {status === 'loading' && <p role="status">Päivitetään pisteitä…</p>}
         {status === 'error' && <p role="alert">Suositusten haku epäonnistui.</p>}

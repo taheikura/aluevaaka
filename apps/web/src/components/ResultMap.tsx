@@ -122,7 +122,6 @@ export function ResultMap({ results }: Props) {
     <div
       ref={containerRef}
       className="result-map"
-      style={{ height: '400px', width: '100%' }}
       role="region"
       aria-label="Alueiden sopivuuskartta"
     />

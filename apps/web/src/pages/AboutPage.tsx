@@ -15,14 +15,14 @@ export function AboutPage() {
       <section>
         <h2>Miten pisteytys toimii?</h2>
         <p>
-          Jokainen kunta pisteytetään valitsemillasi painotuksilla. Parempi arvo suhteessa muihin
-          kuntiin tuottaa korkeamman kategoriapisteet. Lopullinen pistemäärä on painotettu keskiarvo
-          kategoriapisteistä. Pakolliset ehdot poistavat kunnan tuloksista kokonaan ennen
+          Jokainen H3-ruutu pisteytetään valitsemillasi painotuksilla. Parempi arvo suhteessa muihin
+          ruutuihin tuottaa korkeamman kategoriapisteen. Lopullinen pistemäärä on painotettu
+          keskiarvo kategoriapisteistä. Pakolliset ehdot poistavat alueen tuloksista kokonaan ennen
           pisteytystä.
         </p>
         <p>
-          Pisteet kuvaavat kunnan sijoittumista{' '}
-          <em>muihin kuntiin verrattuna sinun painotuksillasi</em> – ne eivät ole absoluuttisia
+          Pisteet kuvaavat alueen sijoittumista{' '}
+          <em>muihin alueisiin verrattuna sinun painotuksillasi</em> – ne eivät ole absoluuttisia
           mittoja.
         </p>
       </section>
@@ -35,7 +35,7 @@ export function AboutPage() {
           päivämäärästä. Täydelliset lähdetiedot löytyvät aineistomanifestista.
         </p>
         <p>
-          Tietojen kattavuus vaihtelee kunnittain. Puuttuvat tiedot eivät laske pisteitä – ne
+          Tietojen kattavuus vaihtelee alueittain. Puuttuvat tiedot eivät laske pisteitä – ne
           näkyvät kattavuusprosenttina tuloskorteissa.
         </p>
       </section>
