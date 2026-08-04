@@ -99,7 +99,7 @@ jobs:
         env:
           DATA_BUCKET: ${{ steps.bucket.outputs.name }}
           POI_SNAPSHOT_KEY: data/raw/osm-poi.json
-          POI_SNAPSHOT_PATH: data/raw/osm-poi.json
+          POI_SNAPSHOT_PATH: ${{ github.workspace }}/data/raw/osm-poi.json
           AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Run data pipeline

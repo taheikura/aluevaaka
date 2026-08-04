@@ -1,6 +1,6 @@
 /**
  * Minimal fetch wrapper for the data pipeline.
- * Node 20 has native fetch — no extra deps needed.
+ * Node 22 has native fetch — no extra deps needed.
  */
 
 export class HttpError extends Error {

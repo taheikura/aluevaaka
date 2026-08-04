@@ -8,9 +8,9 @@ const bucket = process.env.DATA_BUCKET;
 const key = process.env.POI_SNAPSHOT_KEY ?? 'data/raw/osm-poi.json';
 const region = process.env.AWS_REGION ?? 'eu-north-1';
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const path = resolve(
-  process.env.POI_SNAPSHOT_PATH ?? resolve(workspaceRoot, 'data/raw/osm-poi.json'),
-);
+const path = process.env.POI_SNAPSHOT_PATH
+  ? resolve(process.env.POI_SNAPSHOT_PATH)
+  : resolve(workspaceRoot, 'data/raw/osm-poi.json');
 
 if (!bucket) {
   throw new Error('Missing required env var: DATA_BUCKET');
