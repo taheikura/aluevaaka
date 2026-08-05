@@ -40,7 +40,7 @@ async function fetchApi<T>(
     const message = [details.error ?? 'Unknown error', details.details?.message]
       .filter(Boolean)
       .join(': ');
-    throw new ApiError(res.status, message, body);
+    throw new ApiError(res.status, message || `HTTP ${res.status}`, body);
   }
 
   const json = await res.json();
