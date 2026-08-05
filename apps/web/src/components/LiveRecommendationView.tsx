@@ -39,7 +39,6 @@ export function LiveRecommendationView() {
   };
 
   const loadMap = async (bounds: MapRequest['bounds']) => {
-    setMapBounds(bounds);
     setStatus('loading');
     if (!Object.values(preferences).some((value) => (value ?? 0) > 0)) {
       setStatus('idle');
@@ -54,6 +53,10 @@ export function LiveRecommendationView() {
     } catch {
       setStatus('error');
     }
+  };
+
+  const handleBoundsChange = (bounds: MapRequest['bounds']) => {
+    setMapBounds(bounds);
   };
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export function LiveRecommendationView() {
         <div className="live-map-panel">
           <ResultMap
             results={data?.results ?? []}
-            onBoundsChange={loadMap}
+            onBoundsChange={handleBoundsChange}
             onZoomChange={setMapZoom}
           />
           <div className="map-legend" role="note" aria-label="Sopivuuskartan selite">

@@ -35,7 +35,7 @@ const defaults: Omit<EnvConfig, 'envName' | 'alertEmail'> = {
   dataPrefix: 'data/generated',
   cfPriceClass: 'PriceClass_100',
   lambdaMemoryMb: 512,
-  lambdaTimeoutSecs: 10,
+  lambdaTimeoutSecs: 60,
   logRetentionDays: 30,
   budgetAlertUsd: 10,
 };
@@ -44,7 +44,7 @@ export const ENV_CONFIGS: Record<EnvName, Omit<EnvConfig, 'alertEmail'>> = {
   development: {
     ...defaults,
     envName: 'development',
-    lambdaMemoryMb: 256,
+    lambdaMemoryMb: 1024,
     logRetentionDays: 7,
     budgetAlertUsd: 5,
   },

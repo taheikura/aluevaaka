@@ -23,7 +23,7 @@ await build({
   entryPoints: [join(root, 'dist', 'index.js')],
   bundle: true,
   platform: 'node',
-  target: 'node24',
+  target: 'node22',
   format: 'esm',
   outfile: join(bundleDir, 'index.mjs'),
   // AWS SDK v3 is available in the Lambda runtime — exclude it to keep the

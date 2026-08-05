@@ -83,3 +83,7 @@ export async function loadDataset(): Promise<NormalizedDataset & { manifest: Dat
 
   return cachedDataset;
 }
+
+export async function loadManifest(): Promise<DatasetManifest> {
+  return fetchJson<DatasetManifest>(`${config.dataPrefix}/dataset-manifest.json`);
+}

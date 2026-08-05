@@ -9,6 +9,13 @@ import type { HandlerResponse } from '../response.js';
 
 // Mock the dataset module before importing the handler
 vi.mock('../dataset.js', () => ({
+  loadManifest: vi.fn().mockResolvedValue({
+    version: '2026-07-30',
+    generatedAt: '2026-07-30T00:00:00Z',
+    municipalityCount: 2,
+    sources: [],
+    qualityWarnings: [],
+  }),
   loadDataset: vi.fn().mockResolvedValue({
     manifest: {
       version: '2026-07-30',
@@ -174,6 +181,30 @@ describe('POST /recommendations', () => {
       context,
     );
     expect(res.statusCode).toBe(400);
+  });
+});
+
+describe('POST /map', () => {
+  it('returns visible cells with match flags', async () => {
+    const res: HandlerResponse = await handler(
+      makeEvent('POST', '/map', {
+        preferences: {
+          housingAffordability: 0.5,
+          healthcareAccess: 0.5,
+          transportConnectivity: 0,
+          natureAndRecreation: 0,
+          economicOutlook: 0,
+          services: 0,
+        },
+        bounds: { south: 59, west: 23, north: 61, east: 26 },
+        zoom: 10,
+      }),
+      context,
+    );
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.results).toBeInstanceOf(Array);
+    expect(body.results[0]).toHaveProperty('isGoodMatch');
   });
 });
 
