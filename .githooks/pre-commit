@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 
+# The repository intentionally does not enforce pnpm's package release-age
+# policy for local pre-commit checks. CI still controls dependency updates via
+# the lockfile and frozen installs.
+PNPM_LOCAL='pnpm --config.minimumReleaseAge=0'
+
 printf '%s\n' 'pre-commit: running Biome checks on staged files...'
 
 # Biome ignores non-supported staged files such as YAML, shell scripts, and
@@ -8,13 +13,13 @@ printf '%s\n' 'pre-commit: running Biome checks on staged files...'
 # otherwise Biome exits with "No files were processed".
 STAGED_BIOME_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|mjs|cjs|ts|tsx|json|jsonc)$' || true)
 if [ -n "$STAGED_BIOME_FILES" ]; then
-	pnpm exec biome check --staged
+	$PNPM_LOCAL exec biome check --staged
 else
 	printf '%s\n' 'pre-commit: no Biome-supported staged files; skipping Biome.'
 fi
 
 printf '%s\n' 'pre-commit: running typecheck and unit tests...'
-pnpm typecheck
-pnpm test
+$PNPM_LOCAL typecheck
+$PNPM_LOCAL test
 
 printf '%s\n' 'pre-commit: checks passed.'
