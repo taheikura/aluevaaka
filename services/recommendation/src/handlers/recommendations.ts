@@ -97,8 +97,13 @@ export async function handleMap(
   try {
     dataset = await loadDataset();
   } catch (err) {
-    logger.error('map_dataset_load_failed', { error: String(err) });
-    return error(503, { error: 'Dataset unavailable', code: 'DATASET_UNAVAILABLE' }, origin);
+    const message = String(err);
+    logger.error('map_dataset_load_failed', { error: message });
+    return error(
+      503,
+      { error: 'Dataset unavailable', code: 'DATASET_UNAVAILABLE', details: { message } },
+      origin,
+    );
   }
   const { south, west, north, east } = input.data.bounds;
   const latitudePadding = (north - south) * 0.1;

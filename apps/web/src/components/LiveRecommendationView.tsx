@@ -51,6 +51,7 @@ export function LiveRecommendationView() {
       setData(response);
       setStatus('idle');
     } catch {
+      setData(null);
       setStatus('error');
     }
   };
