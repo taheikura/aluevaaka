@@ -50,9 +50,10 @@ export function LiveRecommendationView() {
       if (requestId !== requestIdRef.current) return;
       setData(response);
       setStatus('idle');
-    } catch {
+    } catch (error) {
       setData(null);
       setStatus('error');
+      console.error('Map loading failed', error);
     }
   };
 

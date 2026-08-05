@@ -36,7 +36,11 @@ async function fetchApi<T>(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     console.error(`API ${res.status} ${path}`, body);
-    throw new ApiError(res.status, (body as { error?: string }).error ?? 'Unknown error', body);
+    const details = body as { error?: string; details?: { message?: string } };
+    const message = [details.error ?? 'Unknown error', details.details?.message]
+      .filter(Boolean)
+      .join(': ');
+    throw new ApiError(res.status, message, body);
   }
 
   const json = await res.json();
