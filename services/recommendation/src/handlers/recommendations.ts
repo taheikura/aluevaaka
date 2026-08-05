@@ -122,13 +122,14 @@ export async function handleMap(
   );
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
+  const maximumMapCells = input.data.zoom <= 10 ? 1500 : input.data.zoom <= 12 ? 3000 : 6000;
   const ranked = rankMunicipalities({
     municipalities: visibleMunicipalities,
     metrics: visibleMetrics,
     ranges: dataset.ranges,
     preferences: input.data.preferences,
     constraints: input.data.constraints,
-    limit: visibleMunicipalities.length,
+    limit: maximumMapCells,
   });
   const detailStride = input.data.zoom <= 10 ? 4 : input.data.zoom <= 12 ? 2 : 1;
   const visible = ranked
@@ -140,7 +141,10 @@ export async function handleMap(
     }));
   logger.info('map_completed', {
     resultCount: visible.length,
+    visibleCount: visibleMunicipalities.length,
     datasetCount: dataset.municipalities.length,
+    zoom: input.data.zoom,
+    responseBytes: JSON.stringify(visible).length,
   });
   return ok({ datasetVersion: dataset.manifest.version, results: visible }, origin);
 }
