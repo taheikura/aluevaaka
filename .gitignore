@@ -57,3 +57,6 @@ pnpm-debug.log*
 *.tfstate
 *.tfstate.backup
 *.tfplan
+
+# python venv
+.venv/

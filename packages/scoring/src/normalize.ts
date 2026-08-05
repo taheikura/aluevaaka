@@ -37,8 +37,14 @@ export function columnRange(
 ): { min: number; max: number } | undefined {
   const valid = values.filter((v): v is number => v !== undefined && Number.isFinite(v));
   if (valid.length < 2) return undefined;
+  let min = valid[0] as number;
+  let max = min;
+  for (const value of valid.slice(1)) {
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
   return {
-    min: Math.min(...valid),
-    max: Math.max(...valid),
+    min,
+    max,
   };
 }
