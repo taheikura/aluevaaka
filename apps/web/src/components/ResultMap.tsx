@@ -16,6 +16,7 @@ import type { MapRequest, RecommendationResult } from '@aluevaaka/schemas';
 interface Props {
   results: RecommendationResult[];
   onBoundsChange?: (bounds: MapRequest['bounds']) => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
 const METROPOLITAN_BOUNDS: L.LatLngBoundsExpression = [
@@ -23,14 +24,16 @@ const METROPOLITAN_BOUNDS: L.LatLngBoundsExpression = [
   [60.42, 25.35],
 ];
 
-export function ResultMap({ results, onBoundsChange }: Props) {
+export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const onBoundsChangeRef = useRef(onBoundsChange);
+  const onZoomChangeRef = useRef(onZoomChange);
 
   useEffect(() => {
     onBoundsChangeRef.current = onBoundsChange;
-  }, [onBoundsChange]);
+    onZoomChangeRef.current = onZoomChange;
+  }, [onBoundsChange, onZoomChange]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -51,6 +54,12 @@ export function ResultMap({ results, onBoundsChange }: Props) {
           north: bounds.getNorth(),
           east: bounds.getEast(),
         });
+      });
+      mapRef.current.on('zoomend', () => {
+        onZoomChangeRef.current?.(mapRef.current?.getZoom() ?? 10);
+      });
+      mapRef.current.on('movestart', () => {
+        mapRef.current?.closePopup();
       });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:

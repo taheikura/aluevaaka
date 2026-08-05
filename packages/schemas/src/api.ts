@@ -74,6 +74,7 @@ export const MapRequestSchema = z.object({
     north: z.number().min(-90).max(90),
     east: z.number().min(-180).max(180),
   }),
+  zoom: z.number().int().min(0).max(24),
 });
 
 export type MapRequest = z.infer<typeof MapRequestSchema>;

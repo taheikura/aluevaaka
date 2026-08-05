@@ -1,5 +1,5 @@
 import type { MapRequest, MapResponse, Preferences } from '@aluevaaka/schemas';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getHealth, postMap } from '../api/client.js';
 import { PreferenceForm } from './PreferenceForm.js';
 import { ResultMap } from './ResultMap.js';
@@ -25,6 +25,8 @@ export function LiveRecommendationView() {
   const [health, setHealth] = useState<Awaited<ReturnType<typeof getHealth>> | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mapBounds, setMapBounds] = useState<MapRequest['bounds'] | null>(null);
+  const [mapZoom, setMapZoom] = useState(10);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     getHealth()
@@ -44,7 +46,9 @@ export function LiveRecommendationView() {
       return;
     }
     try {
-      const response = await postMap({ preferences, constraints: {}, bounds });
+      const requestId = ++requestIdRef.current;
+      const response = await postMap({ preferences, constraints: {}, bounds, zoom: mapZoom });
+      if (requestId !== requestIdRef.current) return;
       setData(response);
       setStatus('idle');
     } catch {
@@ -56,7 +60,7 @@ export function LiveRecommendationView() {
     if (!mapBounds) return;
     const timer = window.setTimeout(() => void loadMap(mapBounds), 250);
     return () => window.clearTimeout(timer);
-  }, [preferences, mapBounds]);
+  }, [preferences, mapBounds, mapZoom]);
 
   return (
     <div className="live-recommendation-layout">
@@ -99,7 +103,11 @@ export function LiveRecommendationView() {
       </aside>
       <main className="live-results">
         <div className="live-map-panel">
-          <ResultMap results={data?.results ?? []} onBoundsChange={loadMap} />
+          <ResultMap
+            results={data?.results ?? []}
+            onBoundsChange={loadMap}
+            onZoomChange={setMapZoom}
+          />
           <div className="map-legend" role="note" aria-label="Sopivuuskartan selite">
             <span className="map-legend-item">
               <span className="map-legend-swatch" style={{ background: '#10b981' }} />

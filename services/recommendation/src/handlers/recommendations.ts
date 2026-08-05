@@ -93,15 +93,13 @@ export async function handleMap(
   if (!input.success) {
     return error(400, { error: 'Validation failed', code: 'VALIDATION_ERROR' }, origin);
   }
-  const dataset = await loadDataset();
-  const ranked = rankMunicipalities({
-    municipalities: dataset.municipalities,
-    metrics: dataset.metrics,
-    ranges: dataset.ranges,
-    preferences: input.data.preferences,
-    constraints: input.data.constraints,
-    limit: dataset.municipalities.length,
-  });
+  let dataset: Awaited<ReturnType<typeof loadDataset>>;
+  try {
+    dataset = await loadDataset();
+  } catch (err) {
+    logger.error('map_dataset_load_failed', { error: String(err) });
+    return error(503, { error: 'Dataset unavailable', code: 'DATASET_UNAVAILABLE' }, origin);
+  }
   const { south, west, north, east } = input.data.bounds;
   const latitudePadding = (north - south) * 0.1;
   const longitudePadding = (east - west) * 0.1;
@@ -109,15 +107,35 @@ export async function handleMap(
   const paddedNorth = Math.min(90, north + latitudePadding);
   const paddedWest = Math.max(-180, west - longitudePadding);
   const paddedEast = Math.min(180, east + longitudePadding);
+  const visibleIds = new Set(
+    dataset.municipalities
+      .filter(({ coordinates }) => {
+        const { lat, lng } = coordinates;
+        return lat >= paddedSouth && lat <= paddedNorth && lng >= paddedWest && lng <= paddedEast;
+      })
+      .map(({ id }) => id),
+  );
+  const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
+  const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
+  const ranked = rankMunicipalities({
+    municipalities: visibleMunicipalities,
+    metrics: visibleMetrics,
+    ranges: dataset.ranges,
+    preferences: input.data.preferences,
+    constraints: input.data.constraints,
+    limit: visibleMunicipalities.length,
+  });
+  const detailStride = input.data.zoom <= 10 ? 4 : input.data.zoom <= 12 ? 2 : 1;
   const visible = ranked
-    .filter(({ coordinates }) => {
-      const { lat, lng } = coordinates;
-      return lat >= paddedSouth && lat <= paddedNorth && lng >= paddedWest && lng <= paddedEast;
-    })
+    .filter((_, index) => index % detailStride === 0)
     .map((result, index) => ({
       ...result,
       rank: index + 1,
       isGoodMatch: result.score >= 0.8,
     }));
+  logger.info('map_completed', {
+    resultCount: visible.length,
+    datasetCount: dataset.municipalities.length,
+  });
   return ok({ datasetVersion: dataset.manifest.version, results: visible }, origin);
 }

@@ -90,8 +90,16 @@ jobs:
           FUNCTION_URL="${{ steps.url.outputs.value }}"
           HEALTH_URL="${FUNCTION_URL%/}/health"
           echo "Health URL: $HEALTH_URL"
-          RESPONSE=$(curl --silent --show-error --fail-with-body --max-time 10 \
-            "$HEALTH_URL")
+          RESPONSE=""
+          for attempt in 1 2 3; do
+            RESPONSE=$(curl --silent --show-error --fail-with-body --connect-timeout 10 --max-time 30 "$HEALTH_URL") && break
+            echo "Health request attempt $attempt failed; retrying..."
+            sleep 10
+          done
+          if [ -z "$RESPONSE" ]; then
+            echo "FAIL: health endpoint did not respond"
+            exit 1
+          fi
           echo "response=$RESPONSE"
 
           STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status',''))")
