@@ -12,6 +12,8 @@ const s3 = new S3Client({ region: config.region });
 /** Module-level cache — survives warm Lambda invocations */
 let cachedDataset: (NormalizedDataset & { manifest: DatasetManifest }) | null = null;
 let cachedVersion: string | null = null;
+let cachedMapDataset: (NormalizedDataset & { manifest: DatasetManifest }) | null = null;
+let cachedMapVersion: string | null = null;
 
 /**
  * When DATA_BUCKET=local (SAM local dev), read files directly from the
@@ -86,4 +88,22 @@ export async function loadDataset(): Promise<NormalizedDataset & { manifest: Dat
 
 export async function loadManifest(): Promise<DatasetManifest> {
   return fetchJson<DatasetManifest>(`${config.dataPrefix}/dataset-manifest.json`);
+}
+
+export async function loadMapDataset(): Promise<NormalizedDataset & { manifest: DatasetManifest }> {
+  const manifest = await loadManifest();
+  if (cachedMapDataset && cachedMapVersion === manifest.version) return cachedMapDataset;
+  const records = await fetchJson<
+    Array<{ municipality: MunicipalityBase; metrics: MunicipalityMetrics }>
+  >(`${config.dataPrefix}/map-index.json`);
+  const municipalities = records.map(({ municipality }) => municipality);
+  const metrics = records.map(({ metrics }) => metrics);
+  const mapDataset = { municipalities, metrics, ranges: buildRanges(metrics), manifest };
+  cachedMapDataset = mapDataset;
+  cachedMapVersion = manifest.version;
+  logger.info('map_dataset_loaded', {
+    version: manifest.version,
+    municipalityCount: municipalities.length,
+  });
+  return mapDataset;
 }

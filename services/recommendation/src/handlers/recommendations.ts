@@ -5,7 +5,7 @@ import {
 } from '@aluevaaka/schemas';
 import { rankMunicipalities } from '@aluevaaka/scoring';
 import { config } from '../config.js';
-import { loadDataset } from '../dataset.js';
+import { loadDataset, loadMapDataset } from '../dataset.js';
 import { logger } from '../logger.js';
 import { publishRecommendationMetric } from '../metrics.js';
 import { error, type HandlerResponse, ok } from '../response.js';
@@ -95,7 +95,7 @@ export async function handleMap(
   }
   let dataset: Awaited<ReturnType<typeof loadDataset>>;
   try {
-    dataset = await loadDataset();
+    dataset = await loadMapDataset();
   } catch (err) {
     const message = String(err);
     logger.error('map_dataset_load_failed', { error: message });

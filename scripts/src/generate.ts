@@ -162,6 +162,12 @@ export async function generate(): Promise<void> {
   await Promise.all([
     writeFile(join(OUTPUT_DIR, 'municipalities.json'), JSON.stringify(municipalities, null, 2)),
     writeFile(join(OUTPUT_DIR, 'metrics.json'), JSON.stringify(metrics, null, 2)),
+    writeFile(
+      join(OUTPUT_DIR, 'map-index.json'),
+      JSON.stringify(
+        municipalities.map((municipality, index) => ({ municipality, metrics: metrics[index] })),
+      ),
+    ),
     writeFile(join(OUTPUT_DIR, 'dataset-manifest.json'), JSON.stringify(manifest, null, 2)),
   ]);
 
