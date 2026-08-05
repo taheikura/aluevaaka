@@ -23,7 +23,7 @@ on:
 
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   PNPM_VERSION: "9"
   AWS_REGION: eu-north-1
 

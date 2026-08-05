@@ -29,7 +29,7 @@ on:
         options: [production, development]
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   AWS_REGION: eu-north-1
 
 jobs:

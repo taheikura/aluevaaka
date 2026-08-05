@@ -63,7 +63,7 @@ export class RecommendationLambda extends Construct {
         path.resolve(__dirname, '../../../services/recommendation/bundle'),
       ),
       handler: 'index.handler',
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       architecture: lambda.Architecture.ARM_64, // Graviton2 — ~20% cheaper than x86
       memorySize: lambdaMemoryMb,
       timeout: cdk.Duration.seconds(lambdaTimeoutSecs),

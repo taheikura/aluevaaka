@@ -7,7 +7,7 @@ Description: >
 
 Globals:
   Function:
-    Runtime: nodejs22.x
+    Runtime: nodejs24.x
     Architectures:
       # SAM local always runs x86_64 regardless of arm64 setting —
       # set arm64 here so the template matches CDK, SAM ignores it locally.
