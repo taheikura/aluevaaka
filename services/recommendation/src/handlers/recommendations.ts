@@ -4,6 +4,7 @@ import {
   type RecommendationResponse,
 } from '@aluevaaka/schemas';
 import { rankMunicipalities } from '@aluevaaka/scoring';
+import { cellToBoundary, cellToParent } from 'h3-js';
 import { config } from '../config.js';
 import { loadDataset, loadMapDataset } from '../dataset.js';
 import { logger } from '../logger.js';
@@ -122,13 +123,20 @@ export async function handleMap(
   );
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
-  const maximumCandidates = input.data.zoom <= 10 ? 4000 : input.data.zoom <= 12 ? 10000 : 20000;
-  const candidateStride = Math.max(1, Math.ceil(visibleMunicipalities.length / maximumCandidates));
-  const candidateMunicipalities = visibleMunicipalities.filter(
+  const aggregateResolution = undefined;
+  const aggregateRecords = aggregateResolution
+    ? aggregateMapRecords(visibleMunicipalities, visibleMetrics, aggregateResolution)
+    : { municipalities: visibleMunicipalities, metrics: visibleMetrics };
+  const maximumCandidates = aggregateResolution ? 10000 : 20000;
+  const candidateStride = Math.max(
+    1,
+    Math.ceil(aggregateRecords.municipalities.length / maximumCandidates),
+  );
+  const candidateMunicipalities = aggregateRecords.municipalities.filter(
     (_, index) => index % candidateStride === 0,
   );
   const candidateIds = new Set(candidateMunicipalities.map(({ id }) => id));
-  const candidateMetrics = visibleMetrics.filter(({ id }) => candidateIds.has(id));
+  const candidateMetrics = aggregateRecords.metrics.filter(({ id }) => candidateIds.has(id));
   const maximumMapCells = input.data.zoom <= 10 ? 1500 : input.data.zoom <= 12 ? 3000 : 6000;
   const ranked = rankMunicipalities({
     municipalities: candidateMunicipalities,
@@ -155,4 +163,43 @@ export async function handleMap(
     responseBytes: JSON.stringify(visible).length,
   });
   return ok({ datasetVersion: dataset.manifest.version, results: visible }, origin);
+}
+
+function aggregateMapRecords(
+  municipalities: Awaited<ReturnType<typeof loadMapDataset>>['municipalities'],
+  metrics: Awaited<ReturnType<typeof loadMapDataset>>['metrics'],
+  resolution: number,
+) {
+  const metricsById = new Map(metrics.map((metric) => [metric.id, metric]));
+  const groups = new Map<
+    string,
+    { municipality: (typeof municipalities)[number]; metric: (typeof metrics)[number] }
+  >();
+  for (const municipality of municipalities) {
+    const h3Index = metricsById.get(municipality.id)?.h3Index;
+    if (!h3Index) continue;
+    const parent = cellToParent(h3Index, resolution);
+    if (groups.has(parent)) continue;
+    const metric = metricsById.get(municipality.id);
+    if (metric) groups.set(parent, { municipality, metric });
+  }
+  return {
+    municipalities: [...groups.entries()].map(([parent, group]) => ({
+      ...group.municipality,
+      id: `h3-${parent}`,
+      h3Index: parent,
+      coordinates: (() => {
+        const boundary = cellToBoundary(parent);
+        const lat = boundary.reduce((sum, point) => sum + point[0], 0) / boundary.length;
+        const lng = boundary.reduce((sum, point) => sum + point[1], 0) / boundary.length;
+        return { lat, lng };
+      })(),
+      polygon: cellToBoundary(parent).map(([lat, lng]) => [lat, lng] as [number, number]),
+    })),
+    metrics: [...groups.entries()].map(([parent, group]) => ({
+      ...group.metric,
+      id: `h3-${parent}`,
+      h3Index: parent,
+    })),
+  };
 }
