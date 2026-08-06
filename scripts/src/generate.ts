@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { DatasetManifest, MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
 import { cellToBoundary, cellToLatLng, cellToParent } from 'h3-js';
-import { calculateGridMetrics, generateGridCells } from './grid.js';
+import { calculateGridMetrics, calculateNoiseMetrics, generateGridCells } from './grid.js';
 import { log } from './lib/logger.js';
 import {
   buildReport,
@@ -28,6 +28,7 @@ import {
 import { fetchCapitalAreas } from './sources/capital-areas.js';
 import { fetchPointsOfInterest } from './sources/points-of-interest.js';
 import { fetchPostalHousingPrices } from './sources/postal-housing.js';
+import { fetchTrafficNoise } from './sources/traffic-noise.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const OUTPUT_DIR = join(__dirname, '../../data/generated');
@@ -38,13 +39,19 @@ export async function generate(): Promise<void> {
   // -------------------------------------------------------------------------
   // 1. Fetch all sources in parallel where safe to do so
   // -------------------------------------------------------------------------
-  const [areaResult, housingResult, pointsResult] = await Promise.all([
+  const [areaResult, housingResult, pointsResult, noiseResult] = await Promise.all([
     fetchCapitalAreas(),
     fetchPostalHousingPrices(),
     fetchPointsOfInterest(),
+    fetchTrafficNoise(),
   ]);
 
-  const provenances = [areaResult.provenance, housingResult.provenance, pointsResult.provenance];
+  const provenances = [
+    areaResult.provenance,
+    housingResult.provenance,
+    pointsResult.provenance,
+    noiseResult.provenance,
+  ];
 
   // -------------------------------------------------------------------------
   // 2. Build lookup maps for efficient merge
@@ -72,10 +79,12 @@ export async function generate(): Promise<void> {
     // The scoring engine handles missing data gracefully.
   }));
   const distanceMetrics = calculateGridMetrics(gridCells, pointsResult.points);
+  const noiseMetrics = calculateNoiseMetrics(gridCells, noiseResult.polygons);
   const municipalities: MunicipalityBase[] = gridCells;
   const metrics: MunicipalityMetrics[] = postalMetrics.map((metric) => ({
     ...metric,
     ...(distanceMetrics.find((distance) => distance.id === metric.id) ?? {}),
+    ...(noiseMetrics.find((noise) => noise.id === metric.id) ?? {}),
   }));
 
   // -------------------------------------------------------------------------
@@ -162,6 +171,7 @@ export async function generate(): Promise<void> {
       distanceToParkKm: coverage(metrics, 'distanceToParkKm'),
       distanceToSchoolKm: coverage(metrics, 'distanceToSchoolKm'),
       distanceToLibraryKm: coverage(metrics, 'distanceToLibraryKm'),
+      trafficNoiseLdenDb: coverage(metrics, 'trafficNoiseLdenDb'),
     },
     sources: provenances,
     qualityWarnings: report.warnings,

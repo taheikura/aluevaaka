@@ -1,6 +1,7 @@
 import type { MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
 import type { PointOfInterest, PointOfInterestKind } from './sources/points-of-interest.js';
+import type { TrafficNoisePolygon } from './sources/traffic-noise.js';
 
 export interface GridCell extends MunicipalityBase {
   h3Index: string;
@@ -107,5 +108,63 @@ export function calculateGridMetrics(
       h3Index: cell.h3Index,
       ...distances,
     } as GridCellMetrics;
+  });
+}
+
+export function calculateNoiseMetrics(
+  cells: GridCell[],
+  polygons: TrafficNoisePolygon[],
+): MunicipalityMetrics[] {
+  const polygonBounds = polygons.map((noise) => {
+    const latitudes = noise.polygon.map(([, lat]) => lat);
+    const longitudes = noise.polygon.map(([lng]) => lng);
+    return {
+      noise,
+      minLat: Math.min(...latitudes),
+      maxLat: Math.max(...latitudes),
+      minLng: Math.min(...longitudes),
+      maxLng: Math.max(...longitudes),
+    };
+  });
+
+  const containsPoint = (point: [number, number], polygon: Array<[number, number]>): boolean => {
+    const [lat, lng] = point;
+    let inside = false;
+    for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+      const [currentLng, currentLat] = polygon[index] ?? [0, 0];
+      const [previousLng, previousLat] = polygon[previous] ?? [0, 0];
+      const crosses = currentLat > lat !== previousLat > lat;
+      if (
+        crosses &&
+        lng <
+          ((previousLng - currentLng) * (lat - currentLat)) / (previousLat - currentLat) +
+            currentLng
+      ) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  };
+
+  return cells.map((cell) => {
+    const [lat, lng] = cell.coordinates ? [cell.coordinates.lat, cell.coordinates.lng] : [0, 0];
+    const cellBoundary =
+      cell.polygon?.map(([cellLat, cellLng]) => [cellLat, cellLng] as [number, number]) ?? [];
+    const match =
+      polygonBounds.find(({ noise, minLat, maxLat, minLng, maxLng }) => {
+        if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return false;
+        return containsPoint([lat, lng], noise.polygon);
+      }) ??
+      polygonBounds.find(({ noise, minLat, maxLat, minLng, maxLng }) => {
+        if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return false;
+        return cellBoundary.some((vertex) => containsPoint(vertex, noise.polygon));
+      });
+    if (!match) return { id: cell.id };
+    return {
+      id: cell.id,
+      trafficNoiseLdenDb: (match.noise.dbLo + match.noise.dbHi) / 2,
+      trafficNoiseCoverage: containsPoint([lat, lng], match.noise.polygon) ? 1 : 0.5,
+      trafficNoiseDataYear: '2022',
+    };
   });
 }
