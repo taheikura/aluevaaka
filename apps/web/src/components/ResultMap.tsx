@@ -153,7 +153,7 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
             `Liikenne: ${formatScore(r.categoryScores.transportConnectivity)}<br/>` +
             `Luonto: ${formatScore(r.categoryScores.natureAndRecreation)}<br/>` +
             `Palvelut: ${formatScore(r.categoryScores.services)}<br/>` +
-            `Turvallisuus: ${formatScore(r.categoryScores.safety)}`,
+            `Liikennemelu: ${formatScore(r.categoryScores.trafficNoise)}`,
         );
       }
     });

@@ -11,7 +11,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   healthcareProximity: 0,
   natureAndRecreation: 0,
   economicOutlook: 0,
-  safety: 0,
+  trafficNoise: 0,
   services: 0,
   groceryProximity: 0,
   schoolProximity: 0,

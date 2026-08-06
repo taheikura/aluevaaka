@@ -35,9 +35,9 @@ const CATEGORIES: { key: keyof Preferences; label: string; description: string }
     description: 'Työllisyys, muuttovoitto ja mediaanitulot',
   },
   {
-    key: 'safety',
-    label: 'Turvallisuus',
-    description: 'Alueen rikollisuustaso, kun lähdeaineisto on saatavilla',
+    key: 'trafficNoise',
+    label: 'Liikennemelu',
+    description: 'Mallinnettu tieliikenteen päivä-ilta-yömelutaso; pienempi on parempi',
   },
   {
     key: 'healthcareProximity',
@@ -62,7 +62,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   transportConnectivity: 0,
   natureAndRecreation: 0,
   economicOutlook: 0,
-  safety: 0,
+  trafficNoise: 0,
   services: 0,
   healthcareProximity: 0,
   groceryProximity: 0,

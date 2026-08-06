@@ -87,8 +87,14 @@ export interface MunicipalityMetrics {
   natureReserveCount?: number;
   /** Distance to nearest lake or coastline in km */
   distanceToWaterKm?: number;
-  /** Recorded crime rate per 1,000 residents, when available. */
-  crimeRatePer1000?: number;
+  /** Modelled traffic noise exposure, day-evening-night level in dB(A). */
+  trafficNoiseLdenDb?: number;
+  /** Modelled night-time traffic noise level in dB(A). */
+  trafficNoiseLnightDb?: number;
+  /** Fraction of the cell covered by noise-source data, 0–1. */
+  trafficNoiseCoverage?: number;
+  /** Publication or modelling year of the noise dataset. */
+  trafficNoiseDataYear?: string;
 
   // Demographics and economic outlook
   /** Unemployment rate as a percentage */

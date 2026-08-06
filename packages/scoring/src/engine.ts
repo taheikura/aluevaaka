@@ -34,7 +34,7 @@ interface MetricRanges {
   distanceToParkKm?: { min: number; max: number };
   distanceToSchoolKm?: { min: number; max: number };
   distanceToLibraryKm?: { min: number; max: number };
-  crimeRatePer1000?: { min: number; max: number };
+  trafficNoiseLdenDb?: { min: number; max: number };
 }
 
 /** Build column ranges from the full dataset. Call once on dataset load. */
@@ -63,7 +63,7 @@ export function buildRanges(metrics: MunicipalityMetrics[]): MetricRanges {
   set('distanceToParkKm', columnRange(col('distanceToParkKm')));
   set('distanceToSchoolKm', columnRange(col('distanceToSchoolKm')));
   set('distanceToLibraryKm', columnRange(col('distanceToLibraryKm')));
-  set('crimeRatePer1000', columnRange(col('crimeRatePer1000')));
+  set('trafficNoiseLdenDb', columnRange(col('trafficNoiseLdenDb')));
 
   return ranges;
 }
@@ -168,10 +168,10 @@ function scoreServices(m: MunicipalityMetrics, ranges: MetricRanges): number | u
     : undefined;
 }
 
-function scoreSafety(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
-  const r = ranges.crimeRatePer1000;
+function scoreTrafficNoise(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
+  const r = ranges.trafficNoiseLdenDb;
   if (!r) return undefined;
-  return normalizeLowerIsBetter(m.crimeRatePer1000, r.min, r.max);
+  return normalizeLowerIsBetter(m.trafficNoiseLdenDb, r.min, r.max);
 }
 
 // ---------------------------------------------------------------------------
@@ -206,7 +206,7 @@ const CATEGORY_LABELS: Record<keyof CategoryScores, string> = {
   schoolProximity: 'School proximity',
   economicOutlook: 'Economic outlook',
   services: 'Local services',
-  safety: 'Safety',
+  trafficNoise: 'Traffic noise',
 };
 
 const PREFERENCE_CATEGORY: Record<string, keyof CategoryScores> = {
@@ -299,7 +299,7 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       schoolProximity: scoreDistance(m.distanceToSchoolKm, ranges.distanceToSchoolKm),
       economicOutlook: undefined,
       services: scoreServices(m, ranges),
-      safety: scoreSafety(m, ranges) ?? undefined,
+      trafficNoise: scoreTrafficNoise(m, ranges) ?? undefined,
     };
 
     // Weighted sum — skip categories with no score

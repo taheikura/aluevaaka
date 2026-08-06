@@ -26,7 +26,7 @@ export const CategoryScoresSchema = z.object({
   groceryProximity: z.number().min(0).max(1).optional(),
   schoolProximity: z.number().min(0).max(1).optional(),
   economicOutlook: z.number().min(0).max(1).optional(),
-  safety: z.number().min(0).max(1).optional(),
+  trafficNoise: z.number().min(0).max(1).optional(),
   services: z.number().min(0).max(1).optional(),
 });
 
