@@ -12,6 +12,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { DatasetManifest, MunicipalityBase, MunicipalityMetrics } from '@aluevaaka/data-model';
+import { cellToBoundary, cellToLatLng, cellToParent } from 'h3-js';
 import { calculateGridMetrics, generateGridCells } from './grid.js';
 import { log } from './lib/logger.js';
 import {
@@ -170,15 +171,35 @@ export async function generate(): Promise<void> {
     municipality,
     metrics: metrics[index],
   }));
-  const mapPartitions = new Map<number, typeof mapIndex>();
-  for (const record of mapIndex) {
-    const bucket = Math.max(
-      0,
-      Math.min(7, Math.floor((record.municipality.coordinates.lat - 60.05) / 0.05)),
-    );
-    const partition = mapPartitions.get(bucket) ?? [];
-    partition.push(record);
-    mapPartitions.set(bucket, partition);
+  const mapPartitions = new Map<string, typeof mapIndex>();
+  for (const resolution of [7, 8, 9]) {
+    const seen = new Set<string>();
+    for (const record of mapIndex) {
+      const h3Index = record.metrics.h3Index;
+      if (!h3Index) continue;
+      const cell = cellToParent(h3Index, resolution);
+      if (seen.has(cell)) continue;
+      seen.add(cell);
+      const latitudePartition = Math.max(
+        0,
+        Math.min(36, Math.floor((record.municipality.coordinates.lat - 60.05) / 0.01)),
+      );
+      const partition = mapPartitions.get(`${resolution}/${latitudePartition}`) ?? [];
+      partition.push({
+        municipality: {
+          ...record.municipality,
+          id: `h3-${cell}`,
+          h3Index: cell,
+          coordinates: (() => {
+            const [lat, lng] = cellToLatLng(cell);
+            return { lat, lng };
+          })(),
+          polygon: cellToBoundary(cell).map(([lat, lng]) => [lat, lng]),
+        },
+        metrics: { ...record.metrics, id: `h3-${cell}`, h3Index: cell },
+      });
+      mapPartitions.set(`${resolution}/${latitudePartition}`, partition);
+    }
   }
 
   await Promise.all([
@@ -187,13 +208,19 @@ export async function generate(): Promise<void> {
     writeFile(join(OUTPUT_DIR, 'map-index.json'), JSON.stringify(mapIndex)),
     writeFile(
       join(OUTPUT_DIR, 'map-manifest.json'),
-      JSON.stringify({ version, resolution: 9, recordCount: municipalities.length }),
+      JSON.stringify({
+        version,
+        resolutions: [7, 8, 9],
+        partitions: [...mapPartitions.keys()],
+        recordCount: municipalities.length,
+      }),
     ),
     writeFile(join(OUTPUT_DIR, 'dataset-manifest.json'), JSON.stringify(manifest, null, 2)),
     ...[...mapPartitions.entries()].map(([partition, records]) => {
-      const path = join(OUTPUT_DIR, 'map', 'resolution-9', `latitude-${partition}.json`);
-      return mkdir(join(OUTPUT_DIR, 'map', 'resolution-9'), { recursive: true }).then(() =>
-        writeFile(path, JSON.stringify(records)),
+      const [resolution, latitude] = partition.split('/');
+      const path = join(OUTPUT_DIR, 'map', `resolution-${resolution}`, `latitude-${latitude}.json`);
+      return mkdir(join(OUTPUT_DIR, 'map', `resolution-${resolution}`), { recursive: true }).then(
+        () => writeFile(path, JSON.stringify(records)),
       );
     }),
   ]);

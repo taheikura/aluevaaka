@@ -103,7 +103,10 @@ export async function handleMap(
   let dataset: NormalizedDataset & { manifest: Awaited<ReturnType<typeof loadManifest>> };
   try {
     const partitions = getLatitudePartitions(paddedSouth, paddedNorth);
-    const loaded = await Promise.all(partitions.map(loadMapPartition));
+    const resolution = input.data.zoom <= 10 ? 7 : input.data.zoom <= 12 ? 8 : 9;
+    const loaded = await Promise.all(
+      partitions.map((partition) => loadMapPartition(resolution, partition)),
+    );
     const municipalities = loaded.flatMap(({ municipalities }) => municipalities);
     const metrics = loaded.flatMap(({ metrics }) => metrics);
     const manifest = await loadManifest();
@@ -166,7 +169,7 @@ export async function handleMap(
 }
 
 function getLatitudePartitions(south: number, north: number): number[] {
-  const first = Math.max(0, Math.floor((south - 60.05) / 0.05));
-  const last = Math.min(7, Math.floor((north - 60.05) / 0.05));
+  const first = Math.max(0, Math.floor((south - 60.05) / 0.01));
+  const last = Math.min(36, Math.floor((north - 60.05) / 0.01));
   return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
 }

@@ -108,13 +108,16 @@ export async function loadMapDataset(): Promise<NormalizedDataset & { manifest: 
   return mapDataset;
 }
 
-export async function loadMapPartition(partition: number): Promise<{
+export async function loadMapPartition(
+  resolution: number,
+  partition: number,
+): Promise<{
   municipalities: MunicipalityBase[];
   metrics: MunicipalityMetrics[];
 }> {
   const records = await fetchJson<
     Array<{ municipality: MunicipalityBase; metrics: MunicipalityMetrics }>
-  >(`${config.dataPrefix}/map/resolution-9/latitude-${partition}.json`);
+  >(`${config.dataPrefix}/map/resolution-${resolution}/latitude-${partition}.json`);
   return {
     municipalities: records.map(({ municipality }) => municipality),
     metrics: records.map(({ metrics }) => metrics),
