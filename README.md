@@ -1,5 +1,6 @@
 # Aluevaaka
 
+[![Deploy](https://github.com/taheikura/aluevaaka/actions/workflows/deploy.yml/badge.svg)](https://github.com/taheikura/aluevaaka/actions/workflows/deploy.yml)
 Finnish municipality recommendation platform. Enter your preferences for housing, healthcare, transport, nature, and economic outlook — get ranked municipalities with explainable scores, category breakdowns, and a map view.
 
 **Live demo:** _link added after first deployment_
