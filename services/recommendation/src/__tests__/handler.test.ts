@@ -83,6 +83,19 @@ vi.mock('../dataset.js', () => ({
       medianHouseholdIncomeEur: { min: 32000, max: 38000 },
     },
   }),
+  loadMapPartition: vi.fn().mockResolvedValue({
+    municipalities: [
+      {
+        id: '091',
+        nameFi: 'Helsinki',
+        region: 'Uusimaa',
+        coordinates: { lat: 60.17, lng: 24.94 },
+        population: 1,
+        areaKm2: 1,
+      },
+    ],
+    metrics: [{ id: '091', housingPricePerM2: 4500 }],
+  }),
   loadMapDataset: vi.fn().mockResolvedValue({
     manifest: {
       version: '2026-07-30',

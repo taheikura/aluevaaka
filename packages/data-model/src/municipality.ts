@@ -129,6 +129,8 @@ export interface DatasetManifest {
   municipalityCount: number;
   /** Number of generated capital-area postal/statistical areas. */
   areaCount?: number;
+  /** H3 resolution used for generated map cells. */
+  gridResolution?: number;
   /** Fraction of generated areas containing each ingested metric, from 0 to 1. */
   metricCoverage?: Record<string, number>;
   sources: DataSourceProvenance[];

@@ -3,10 +3,10 @@ import {
   RecommendationRequestSchema,
   type RecommendationResponse,
 } from '@aluevaaka/schemas';
-import { rankMunicipalities } from '@aluevaaka/scoring';
-import { cellToBoundary, cellToParent } from 'h3-js';
+import type { NormalizedDataset } from '@aluevaaka/scoring';
+import { buildRanges, rankMunicipalities } from '@aluevaaka/scoring';
 import { config } from '../config.js';
-import { loadDataset, loadMapDataset } from '../dataset.js';
+import { loadDataset, loadManifest, loadMapPartition } from '../dataset.js';
 import { logger } from '../logger.js';
 import { publishRecommendationMetric } from '../metrics.js';
 import { error, type HandlerResponse, ok } from '../response.js';
@@ -79,7 +79,6 @@ export async function handleRecommendations(
 
   return ok(body, origin);
 }
-
 export async function handleMap(
   rawBody: string | null | undefined,
   origin: string | undefined,
@@ -94,9 +93,21 @@ export async function handleMap(
   if (!input.success) {
     return error(400, { error: 'Validation failed', code: 'VALIDATION_ERROR' }, origin);
   }
-  let dataset: Awaited<ReturnType<typeof loadDataset>>;
+  const { south, west, north, east } = input.data.bounds;
+  const latitudePadding = (north - south) * 0.1;
+  const longitudePadding = (east - west) * 0.1;
+  const paddedSouth = Math.max(-90, south - latitudePadding);
+  const paddedNorth = Math.min(90, north + latitudePadding);
+  const paddedWest = Math.max(-180, west - longitudePadding);
+  const paddedEast = Math.min(180, east + longitudePadding);
+  let dataset: NormalizedDataset & { manifest: Awaited<ReturnType<typeof loadManifest>> };
   try {
-    dataset = await loadMapDataset();
+    const partitions = getLatitudePartitions(paddedSouth, paddedNorth);
+    const loaded = await Promise.all(partitions.map(loadMapPartition));
+    const municipalities = loaded.flatMap(({ municipalities }) => municipalities);
+    const metrics = loaded.flatMap(({ metrics }) => metrics);
+    const manifest = await loadManifest();
+    dataset = { municipalities, metrics, ranges: buildRanges(metrics), manifest };
   } catch (err) {
     const message = String(err);
     logger.error('map_dataset_load_failed', { error: message });
@@ -106,13 +117,6 @@ export async function handleMap(
       origin,
     );
   }
-  const { south, west, north, east } = input.data.bounds;
-  const latitudePadding = (north - south) * 0.1;
-  const longitudePadding = (east - west) * 0.1;
-  const paddedSouth = Math.max(-90, south - latitudePadding);
-  const paddedNorth = Math.min(90, north + latitudePadding);
-  const paddedWest = Math.max(-180, west - longitudePadding);
-  const paddedEast = Math.min(180, east + longitudePadding);
   const visibleIds = new Set(
     dataset.municipalities
       .filter(({ coordinates }) => {
@@ -123,11 +127,8 @@ export async function handleMap(
   );
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
-  const aggregateResolution = undefined;
-  const aggregateRecords = aggregateResolution
-    ? aggregateMapRecords(visibleMunicipalities, visibleMetrics, aggregateResolution)
-    : { municipalities: visibleMunicipalities, metrics: visibleMetrics };
-  const maximumCandidates = aggregateResolution ? 10000 : 20000;
+  const aggregateRecords = { municipalities: visibleMunicipalities, metrics: visibleMetrics };
+  const maximumCandidates = 20000;
   const candidateStride = Math.max(
     1,
     Math.ceil(aggregateRecords.municipalities.length / maximumCandidates),
@@ -165,41 +166,8 @@ export async function handleMap(
   return ok({ datasetVersion: dataset.manifest.version, results: visible }, origin);
 }
 
-function aggregateMapRecords(
-  municipalities: Awaited<ReturnType<typeof loadMapDataset>>['municipalities'],
-  metrics: Awaited<ReturnType<typeof loadMapDataset>>['metrics'],
-  resolution: number,
-) {
-  const metricsById = new Map(metrics.map((metric) => [metric.id, metric]));
-  const groups = new Map<
-    string,
-    { municipality: (typeof municipalities)[number]; metric: (typeof metrics)[number] }
-  >();
-  for (const municipality of municipalities) {
-    const h3Index = metricsById.get(municipality.id)?.h3Index;
-    if (!h3Index) continue;
-    const parent = cellToParent(h3Index, resolution);
-    if (groups.has(parent)) continue;
-    const metric = metricsById.get(municipality.id);
-    if (metric) groups.set(parent, { municipality, metric });
-  }
-  return {
-    municipalities: [...groups.entries()].map(([parent, group]) => ({
-      ...group.municipality,
-      id: `h3-${parent}`,
-      h3Index: parent,
-      coordinates: (() => {
-        const boundary = cellToBoundary(parent);
-        const lat = boundary.reduce((sum, point) => sum + point[0], 0) / boundary.length;
-        const lng = boundary.reduce((sum, point) => sum + point[1], 0) / boundary.length;
-        return { lat, lng };
-      })(),
-      polygon: cellToBoundary(parent).map(([lat, lng]) => [lat, lng] as [number, number]),
-    })),
-    metrics: [...groups.entries()].map(([parent, group]) => ({
-      ...group.metric,
-      id: `h3-${parent}`,
-      h3Index: parent,
-    })),
-  };
+function getLatitudePartitions(south: number, north: number): number[] {
+  const first = Math.max(0, Math.floor((south - 60.05) / 0.05));
+  const last = Math.min(7, Math.floor((north - 60.05) / 0.05));
+  return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
 }

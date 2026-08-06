@@ -9,7 +9,7 @@
  *
  * Run: DATA_BUCKET=my-bucket pnpm --filter @aluevaaka/scripts upload
  */
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -44,7 +44,16 @@ async function upload(): Promise<void> {
     );
   }
 
-  const files = (await readdir(LOCAL_DIR)).filter((f) => f.endsWith('.json'));
+  const files: string[] = [];
+  async function collect(directory: string): Promise<void> {
+    for (const entry of await readdir(directory)) {
+      const localPath = join(directory, entry);
+      const info = await stat(localPath);
+      if (info.isDirectory()) await collect(localPath);
+      else if (entry.endsWith('.json')) files.push(localPath);
+    }
+  }
+  await collect(LOCAL_DIR);
 
   if (files.length === 0) {
     log.error('upload_no_files', { dir: LOCAL_DIR });
@@ -52,8 +61,8 @@ async function upload(): Promise<void> {
   }
 
   await Promise.all(
-    files.map(async (file) => {
-      const localPath = join(LOCAL_DIR, file);
+    files.map(async (localPath) => {
+      const file = localPath.slice(LOCAL_DIR.length + 1);
       const key = `${DATA_PREFIX}/${file}`;
       const body = await readFile(localPath);
       const ext = `.${basename(file).split('.').pop() ?? ''}`;

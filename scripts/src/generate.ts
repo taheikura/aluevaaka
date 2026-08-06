@@ -57,7 +57,7 @@ export async function generate(): Promise<void> {
   // -------------------------------------------------------------------------
   const gridCells = generateGridCells(areaResult.municipalities);
   log.info('grid_generation_complete', {
-    resolution: 10,
+    resolution: 9,
     cellCount: gridCells.length,
   });
 
@@ -107,7 +107,13 @@ export async function generate(): Promise<void> {
     try {
       const prev = JSON.parse(await readFile(manifestPath, 'utf-8')) as DatasetManifest;
       qualityResults.push(
-        checkDatasetShrinkage(municipalities.length, prev.municipalityCount, 0.05),
+        checkDatasetShrinkage(
+          municipalities.length,
+          prev.municipalityCount,
+          0.05,
+          9,
+          prev.gridResolution,
+        ),
       );
     } catch {
       log.warn('could_not_read_previous_manifest');
@@ -146,6 +152,7 @@ export async function generate(): Promise<void> {
     generatedAt: new Date().toISOString(),
     municipalityCount: municipalities.length,
     areaCount: municipalities.length,
+    gridResolution: 9,
     metricCoverage: {
       housingPricePerM2: coverage(metrics, 'housingPricePerM2'),
       distanceToHealthcareKm: coverage(metrics, 'distanceToHealthcareKm'),
@@ -159,16 +166,36 @@ export async function generate(): Promise<void> {
     qualityWarnings: report.warnings,
   };
 
+  const mapIndex = municipalities.map((municipality, index) => ({
+    municipality,
+    metrics: metrics[index],
+  }));
+  const mapPartitions = new Map<number, typeof mapIndex>();
+  for (const record of mapIndex) {
+    const bucket = Math.max(
+      0,
+      Math.min(7, Math.floor((record.municipality.coordinates.lat - 60.05) / 0.05)),
+    );
+    const partition = mapPartitions.get(bucket) ?? [];
+    partition.push(record);
+    mapPartitions.set(bucket, partition);
+  }
+
   await Promise.all([
     writeFile(join(OUTPUT_DIR, 'municipalities.json'), JSON.stringify(municipalities, null, 2)),
     writeFile(join(OUTPUT_DIR, 'metrics.json'), JSON.stringify(metrics, null, 2)),
+    writeFile(join(OUTPUT_DIR, 'map-index.json'), JSON.stringify(mapIndex)),
     writeFile(
-      join(OUTPUT_DIR, 'map-index.json'),
-      JSON.stringify(
-        municipalities.map((municipality, index) => ({ municipality, metrics: metrics[index] })),
-      ),
+      join(OUTPUT_DIR, 'map-manifest.json'),
+      JSON.stringify({ version, resolution: 9, recordCount: municipalities.length }),
     ),
     writeFile(join(OUTPUT_DIR, 'dataset-manifest.json'), JSON.stringify(manifest, null, 2)),
+    ...[...mapPartitions.entries()].map(([partition, records]) => {
+      const path = join(OUTPUT_DIR, 'map', 'resolution-9', `latitude-${partition}.json`);
+      return mkdir(join(OUTPUT_DIR, 'map', 'resolution-9'), { recursive: true }).then(() =>
+        writeFile(path, JSON.stringify(records)),
+      );
+    }),
   ]);
 
   log.info('pipeline_complete', {

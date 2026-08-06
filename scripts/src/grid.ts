@@ -26,7 +26,8 @@ const KIND_KEYS: Record<PointOfInterestKind, keyof GridCellMetrics> = {
   library: 'distanceToLibraryKm',
 };
 
-const GRID_RESOLUTION = 10;
+// H3 resolution 9 is approximately 200 m across and keeps the map dataset manageable.
+const GRID_RESOLUTION = 9;
 const GRID_BOUNDS = [
   [60.05, 24.45],
   [60.05, 25.35],

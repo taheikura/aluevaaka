@@ -78,7 +78,7 @@ aluevaaka/
 
 ### Prerequisites
 
-- Node.js ≥ 20
+- Node.js ≥ 24
 - pnpm ≥ 9 (`npm i -g pnpm`)
 - AWS CLI (for deployment and data upload)
 - AWS CDK (`npm i -g aws-cdk`)
@@ -284,7 +284,13 @@ pnpm --filter @aluevaaka/scripts upload
 | Net migration | Statistics Finland PxWeb (119z) | CC BY 4.0 |
 | Housing price per m² | Statistics Finland PxWeb (11ls) | CC BY 4.0 |
 
-Healthcare distance, transport connectivity, and nature indicators are stubbed in the data model — add source adapters in `scripts/src/sources/` and wire them into `generate.ts`.
+OSM-derived healthcare, transport, grocery, school, library, and nature distances are precomputed during the data refresh. Lambda only queries the generated S3 snapshot; it does not call Overpass or process the raw PBF.
+
+### Low-cost GIS-friendly storage
+
+The project deliberately uses S3 rather than a database. The refresh produces stable, versioned JSON objects including `map-index.json` and `map-manifest.json`. These fields are intentionally simple so the records can later be converted to Parquet and registered in Athena without changing the application model. Athena is not part of the runtime path.
+
+The browser calls Lambda for preference-specific scoring and viewport filtering. A future optimization can publish static zoom tiles to S3/CloudFront using the same H3 records, while keeping the current S3-only architecture and near-zero idle cost.
 
 ---
 
@@ -409,6 +415,6 @@ fields @timestamp, level, msg, durationMs, resultCount
 
 - Recommendations reflect publicly available statistics, not real-time conditions.
 - Housing price data has limited coverage for small municipalities (< 2 000 residents).
-- Healthcare distance, transport connectivity, and nature scores are not yet implemented — those categories will show no score until source adapters are added.
+- Healthcare, transport, grocery, school, library, and nature distances are precomputed in the refresh pipeline.
 - Scores represent match against *your weighted preferences*, not objective quality rankings.
-- Dataset is refreshed weekly; source publication dates are shown per result.
+- Dataset is refreshed monthly from the Geofabrik OSM extract and can also be refreshed manually.

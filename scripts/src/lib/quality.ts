@@ -171,7 +171,29 @@ export function checkDatasetShrinkage(
   currentCount: number,
   previousCount: number,
   maxShrinkRatio: number,
+  currentResolution?: number,
+  previousResolution?: number,
 ): QualityResult {
+  if (
+    currentResolution !== undefined &&
+    previousResolution !== undefined &&
+    currentResolution !== previousResolution
+  ) {
+    return {
+      check: 'dataset_shrinkage',
+      passed: true,
+      severity: 'warning',
+      message: `Dataset size changed because H3 resolution changed (${previousResolution} → ${currentResolution}); previous: ${previousCount}, current: ${currentCount}`,
+    };
+  }
+  if (currentResolution !== undefined && previousResolution === undefined) {
+    return {
+      check: 'dataset_shrinkage',
+      passed: true,
+      severity: 'warning',
+      message: `Dataset uses a new H3 resolution (${currentResolution}); previous manifest has no resolution metadata`,
+    };
+  }
   if (previousCount === 0) {
     return {
       check: 'dataset_shrinkage',
