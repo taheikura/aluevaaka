@@ -131,7 +131,7 @@ export async function handleMap(
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
   const aggregateRecords = { municipalities: visibleMunicipalities, metrics: visibleMetrics };
-  const maximumMapCells = input.data.zoom <= 10 ? 800 : input.data.zoom <= 12 ? 1600 : 3000;
+  const maximumMapCells = input.data.zoom <= 10 ? 5000 : input.data.zoom <= 12 ? 5000 : 6000;
   const candidateStride = Math.max(
     1,
     Math.ceil(aggregateRecords.municipalities.length / maximumMapCells),
@@ -149,7 +149,9 @@ export async function handleMap(
     constraints: input.data.constraints,
     limit: Math.min(maximumMapCells, candidateMunicipalities.length),
   });
-  const detailStride = input.data.zoom <= 10 ? 4 : input.data.zoom <= 12 ? 2 : 1;
+  // Each zoom already uses its own H3 resolution. Do not thin the result again:
+  // that creates visible holes in an otherwise complete coarse grid.
+  const detailStride = 1;
   const visible = ranked
     .filter((_, index) => index % detailStride === 0)
     .map((result, index) => ({
