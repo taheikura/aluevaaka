@@ -128,17 +128,16 @@ export async function handleMap(
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
   const aggregateRecords = { municipalities: visibleMunicipalities, metrics: visibleMetrics };
-  const maximumCandidates = 20000;
+  const maximumMapCells = input.data.zoom <= 10 ? 800 : input.data.zoom <= 12 ? 1600 : 3000;
   const candidateStride = Math.max(
     1,
-    Math.ceil(aggregateRecords.municipalities.length / maximumCandidates),
+    Math.ceil(aggregateRecords.municipalities.length / maximumMapCells),
   );
   const candidateMunicipalities = aggregateRecords.municipalities.filter(
     (_, index) => index % candidateStride === 0,
   );
   const candidateIds = new Set(candidateMunicipalities.map(({ id }) => id));
   const candidateMetrics = aggregateRecords.metrics.filter(({ id }) => candidateIds.has(id));
-  const maximumMapCells = input.data.zoom <= 10 ? 1500 : input.data.zoom <= 12 ? 3000 : 6000;
   const ranked = rankMunicipalities({
     municipalities: candidateMunicipalities,
     metrics: candidateMetrics,

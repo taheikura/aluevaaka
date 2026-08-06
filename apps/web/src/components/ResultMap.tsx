@@ -121,8 +121,9 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
 
     validResults.forEach((r) => {
       const score = Math.max(0, Math.min(1, r.score));
-      const hue = Math.round(score ** 0.65 * 120);
+      const hue = Math.round(score * 120);
       const strongMatch = score >= 0.8;
+      const fillOpacity = strongMatch ? 0.62 : 0.18 + score * 0.3;
       const polygon = r.polygon?.filter(
         ([polygonLat, polygonLng]) =>
           Number.isFinite(polygonLat) &&
@@ -136,7 +137,7 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
         const cellPolygon = L.polygon(polygon, {
           color: strongMatch ? '#064e3b' : `hsl(${hue} 80% 30%)`,
           fillColor: strongMatch ? '#10b981' : `hsl(${hue} 90% 48%)`,
-          fillOpacity: strongMatch ? 0.5 : 0.32,
+          fillOpacity,
           weight: strongMatch ? 2 : 1,
         }).addTo(map);
         cellPolygon.bindPopup(
