@@ -116,7 +116,7 @@ export function LiveRecommendationView() {
           <div className="map-legend" role="note" aria-label="Sopivuuskartan selite">
             <span className="map-legend-item">
               <span className="map-legend-swatch" style={{ background: '#10b981' }} />
-              Hyvä osuma ≥ 80 %
+              Hyvä osuma ≥ 90 %
             </span>
             <span className="map-legend-item">
               <span className="map-legend-swatch" style={{ background: '#f59e0b' }} />

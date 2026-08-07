@@ -72,6 +72,13 @@ export function ResultCard({ result, rank }: Props) {
         </p>
       )}
 
+      {result.avgMonthlyRent2r !== undefined && (
+        <p className="housing-data" role="note">
+          Keskimääräinen 2h vuokra: {Math.round(result.avgMonthlyRent2r).toLocaleString('fi-FI')}{' '}
+          €/kk
+        </p>
+      )}
+
       {result.strengths.length > 0 && (
         <section aria-label="Vahvuudet" className="result-section">
           <h3>Vahvuudet</h3>

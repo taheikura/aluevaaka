@@ -157,7 +157,7 @@ export async function handleMap(
     .map((result, index) => ({
       ...result,
       rank: index + 1,
-      isGoodMatch: result.score >= 0.8,
+      isGoodMatch: result.score >= 0.9,
     }));
   logger.info('map_completed', {
     resultCount: visible.length,

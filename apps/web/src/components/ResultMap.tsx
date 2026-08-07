@@ -122,7 +122,7 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
     validResults.forEach((r) => {
       const score = Math.max(0, Math.min(1, r.score));
       const hue = Math.round(score * 120);
-      const strongMatch = score >= 0.8;
+      const strongMatch = score >= 0.9;
       const fillOpacity = strongMatch ? 0.62 : 0.18 + score * 0.3;
       const polygon = r.polygon?.filter(
         ([polygonLat, polygonLng]) =>
@@ -146,8 +146,18 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
             `<hr>` +
             `<strong>Värin peruste</strong><br/>` +
             `Sopivuus: ${Math.round(score * 100)}/100<br/>` +
-            `${strongMatch ? '<strong>Hyvä osuma (vähintään 80 %)</strong><br/>' : ''}` +
+            `${strongMatch ? '<strong>Hyvä osuma (vähintään 90 %)</strong><br/>' : ''}` +
             `Tietojen kattavuus: ${Math.round(r.dataCompleteness * 100)}%<br/>` +
+            `<hr><strong>Alueen mittarit</strong><br/>` +
+            `${formatMetric('Asuntojen toteutunut neliöhinta', r.housingPricePerM2, ' €/m²')}<br/>` +
+            `${formatMetric('Asuntokauppoja', r.housingTransactionCount, '')}<br/>` +
+            `${formatMetric('2h vuokra', r.avgMonthlyRent2r, ' €/kk')}<br/>` +
+            `${formatMetric('Etäisyys terveyspalveluihin', r.distanceToHealthcareKm, ' km')}<br/>` +
+            `${formatMetric('Etäisyys joukkoliikenteeseen', r.distanceToTransitKm, ' km')}<br/>` +
+            `${formatMetric('Etäisyys ruokakauppaan', r.distanceToGroceryKm, ' km')}<br/>` +
+            `${formatMetric('Etäisyys puistoon', r.distanceToParkKm, ' km')}<br/>` +
+            `${formatMetric('Etäisyys kouluun', r.distanceToSchoolKm, ' km')}<br/>` +
+            `${formatMetric('Liikennemelu Lden', r.trafficNoiseLdenDb, ' dB(A)')}<br/>` +
             `Asuminen: ${formatScore(r.categoryScores.housingAffordability)}<br/>` +
             `Terveydenhuolto: ${formatScore(r.categoryScores.healthcareAccess)}<br/>` +
             `Liikenne: ${formatScore(r.categoryScores.transportConnectivity)}<br/>` +
@@ -179,6 +189,14 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
 
 function formatScore(score: number | undefined): string {
   return score === undefined ? 'ei dataa' : `${Math.round(score * 100)}/100`;
+}
+
+function formatMetric(label: string, value: number | undefined, suffix: string): string {
+  if (value === undefined) return `${label}: ei dataa`;
+  const formatted = Number.isInteger(value)
+    ? value.toLocaleString('fi-FI')
+    : value.toLocaleString('fi-FI', { maximumFractionDigits: 1 });
+  return `${label}: ${formatted}${suffix}`;
 }
 
 function escapeHtml(value: string): string {

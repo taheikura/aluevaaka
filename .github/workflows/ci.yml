@@ -162,7 +162,7 @@ jobs:
       - name: Upload Lambda bundle artifact
         uses: actions/upload-artifact@v6
         with:
-          name: lambda-bundle
+          name: lambda-bundle-${{ github.sha }}
           path: services/recommendation/lambda.zip
           retention-days: 7
 
@@ -199,7 +199,7 @@ jobs:
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v6
         with:
-          name: web-dist
+          name: web-dist-${{ github.sha }}
           path: apps/web/dist/
           retention-days: 7
 

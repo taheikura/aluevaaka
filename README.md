@@ -18,6 +18,13 @@ GitHub Actions → CDK → AWS infrastructure
 GitHub Actions → S3 (datasets + frontend) → Lambda (function code update)
 ```
 
+CI builds the Lambda and frontend artifacts once. A successful CI run on
+`main` triggers deployment, which downloads those exact artifacts and promotes
+them to the selected environment. Deployment does not rebuild the Lambda or
+frontend. The frontend contains a placeholder API URL during CI; deployment
+replaces only that environment-specific value before uploading the otherwise
+tested artifact.
+
 All infrastructure is serverless. No EC2, no RDS, no NAT Gateway, no always-on workers. Idle cost is near zero (storage + log retention only).
 
 ### Key decisions
@@ -69,7 +76,7 @@ aluevaaka/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml              # PR checks: typecheck, lint, test, build, cdk synth
-│       ├── deploy.yml          # Deploy to AWS on push to main
+│       ├── deploy.yml          # Promote successful CI artifacts to AWS
 │       ├── smoke-test.yml      # Reusable: health + recommendation + error handling
 │       └── data-pipeline.yml   # Weekly dataset refresh (or manual)
 └── DESIGN.md
