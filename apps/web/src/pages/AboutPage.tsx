@@ -30,13 +30,52 @@ export function AboutPage() {
       <section>
         <h2>Aineistolähteet</h2>
         <p>
-          Palvelu käyttää suomalaisia avoimia aineistoja, kuten Tilastokeskuksen ja muiden
-          viranomaisten julkaisemia tilastoja. Jokainen tulos sisältää tiedon aineistoversion
-          päivämäärästä. Täydelliset lähdetiedot löytyvät aineistomanifestista.
+          Palvelu käyttää seuraavia avoimia aineistoja. Tiedot käsitellään etukäteen ja yhdistetään
+          noin 200 metrin H3-ruutuihin. Lähdeaineistojen päivitykset eivät ole reaaliaikaisia.
         </p>
+        <ul className="data-source-list">
+          <li>
+            <a href="https://www.hsy.fi/avoindata/" target="_blank" rel="noreferrer">
+              HSY:n avoin data
+            </a>{' '}
+            – pääkaupunkiseudun postinumeroalueet (alueiden rajat ja nimet).
+          </li>
+          <li>
+            <a
+              href="https://pxweb2.stat.fi/PxWeb/pxweb/fi/StatFin/StatFin__ashi/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Tilastokeskus, asuntojen kauppahinnat postinumeroalueittain
+            </a>{' '}
+            – toteutuneet hinnat ja kauppojen lukumäärät. Käyttöehto: CC BY 4.0.
+          </li>
+          <li>
+            <a
+              href="https://download.geofabrik.de/europe/finland.html"
+              target="_blank"
+              rel="noreferrer"
+            >
+              OpenStreetMap / Geofabrik Finland
+            </a>{' '}
+            – palvelu-, liikenne- ja virkistyskohteet. Tiedot ovat OpenStreetMapin ODbL-lisenssin
+            alaisia.
+          </li>
+          <li>
+            <a
+              href="https://kartta.hel.fi/ws/geoserver/avoindata/wfs"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Helsingin kaupungin meluselvitys 2022
+            </a>{' '}
+            – tieliikenteen mallinnettu päivä-ilta-yömelu (Lden), CC BY 4.0.
+          </li>
+        </ul>
         <p>
           Tietojen kattavuus vaihtelee alueittain. Puuttuvat tiedot eivät laske pisteitä – ne
-          näkyvät kattavuusprosenttina tuloskorteissa.
+          näkyvät kattavuusprosenttina tuloskorteissa. Aineistoversion päivämäärä ja tarkemmat
+          lähdetiedot löytyvät myös julkaistun aineiston manifestista.
         </p>
       </section>
 

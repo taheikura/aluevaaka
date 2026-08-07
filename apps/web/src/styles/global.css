@@ -520,6 +520,12 @@ body {
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.25rem;
 }
+.data-source-list {
+  padding-left: 1.25rem;
+}
+.data-source-list li {
+  margin-bottom: 0.75rem;
+}
 
 /* Responsive */
 @media (max-width: 600px) {
