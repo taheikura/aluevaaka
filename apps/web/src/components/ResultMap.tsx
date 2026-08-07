@@ -164,6 +164,7 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
             `Luonto: ${formatScore(r.categoryScores.natureAndRecreation)}<br/>` +
             `Palvelut: ${formatScore(r.categoryScores.services)}<br/>` +
             `Liikennemelu: ${formatScore(r.categoryScores.trafficNoise)}`,
+          { autoPan: false },
         );
       }
     });
