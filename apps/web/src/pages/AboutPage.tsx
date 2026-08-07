@@ -74,8 +74,11 @@ export function AboutPage() {
         </ul>
         <p>
           Tietojen kattavuus vaihtelee alueittain. Puuttuvat tiedot eivät laske pisteitä – ne
-          näkyvät kattavuusprosenttina tuloskorteissa. Aineistoversion päivämäärä ja tarkemmat
-          lähdetiedot löytyvät myös julkaistun aineiston manifestista.
+          näkyvät kattavuusprosenttina tuloskorteissa. Poikkeuksena liikennemelussa mallinnetun
+          tieosuuden ulkopuolinen ruutu tulkitaan vähäisen tie- ja katuliikennemelun alueeksi. Tämä
+          on oletus vain tälle mittarille, eikä sitä sovelleta muihin puuttuviin tietoihin.
+          Aineistoversion päivämäärä ja tarkemmat lähdetiedot löytyvät myös julkaistun aineiston
+          manifestista.
         </p>
       </section>
 

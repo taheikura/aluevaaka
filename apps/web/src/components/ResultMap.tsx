@@ -157,7 +157,7 @@ export function ResultMap({ results, onBoundsChange, onZoomChange }: Props) {
             `${formatMetric('Etäisyys ruokakauppaan', r.distanceToGroceryKm, ' km')}<br/>` +
             `${formatMetric('Etäisyys puistoon', r.distanceToParkKm, ' km')}<br/>` +
             `${formatMetric('Etäisyys kouluun', r.distanceToSchoolKm, ' km')}<br/>` +
-            `${formatMetric('Liikennemelu Lden', r.trafficNoiseLdenDb, ' dB(A)')}<br/>` +
+            `${r.trafficNoiseAssumedQuiet ? 'Liikennemelu Lden: ei mallinnettua tieosuutta (oletus: vähäinen)<br/>' : formatMetric('Liikennemelu Lden', r.trafficNoiseLdenDb, ' dB(A)')} ` +
             `Asuminen: ${formatScore(r.categoryScores.housingAffordability)}<br/>` +
             `Terveydenhuolto: ${formatScore(r.categoryScores.healthcareAccess)}<br/>` +
             `Liikenne: ${formatScore(r.categoryScores.transportConnectivity)}<br/>` +

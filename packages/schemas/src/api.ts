@@ -54,6 +54,7 @@ export const RecommendationResultSchema = z.object({
   trafficNoiseLdenDb: z.number().nonnegative().optional(),
   trafficNoiseCoverage: z.number().min(0).max(1).optional(),
   trafficNoiseDataYear: z.string().optional(),
+  trafficNoiseAssumedQuiet: z.boolean().default(false),
   h3Index: z.string().optional(),
   /** Overall weighted match score 0–1 */
   score: z.number().min(0).max(1),
