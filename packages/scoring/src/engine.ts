@@ -171,9 +171,7 @@ function scoreServices(m: MunicipalityMetrics, ranges: MetricRanges): number | u
 function scoreTrafficNoise(m: MunicipalityMetrics, ranges: MetricRanges): number | undefined {
   const r = ranges.trafficNoiseLdenDb;
   if (!r) return undefined;
-  // The source maps modelled road-traffic noise bands. Outside those bands,
-  // absence means no mapped road-traffic exposure, not missing data in general.
-  return normalizeLowerIsBetter(m.trafficNoiseLdenDb ?? 0, r.min, r.max);
+  return normalizeLowerIsBetter(m.trafficNoiseLdenDb, r.min, r.max);
 }
 
 // ---------------------------------------------------------------------------
@@ -352,7 +350,6 @@ export function rankMunicipalities(input: RankInput): RecommendationResult[] {
       trafficNoiseLdenDb: m.trafficNoiseLdenDb,
       trafficNoiseCoverage: m.trafficNoiseCoverage,
       trafficNoiseDataYear: m.trafficNoiseDataYear,
-      trafficNoiseAssumedQuiet: m.trafficNoiseLdenDb === undefined,
       h3Index: m.h3Index,
       score,
       categoryScores,

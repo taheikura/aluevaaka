@@ -94,6 +94,11 @@ export async function handleMap(
     return error(400, { error: 'Validation failed', code: 'VALIDATION_ERROR' }, origin);
   }
   const { south, west, north, east } = input.data.bounds;
+  const noiseOnly =
+    (input.data.preferences.trafficNoise ?? 0) > 0 &&
+    Object.entries(input.data.preferences).every(
+      ([key, value]) => key === 'trafficNoise' || (value ?? 0) === 0,
+    );
   const latitudePadding = (north - south) * 0.1;
   const longitudePadding = (east - west) * 0.1;
   const paddedSouth = Math.max(-90, south - latitudePadding);
@@ -130,7 +135,17 @@ export async function handleMap(
   );
   const visibleMunicipalities = dataset.municipalities.filter(({ id }) => visibleIds.has(id));
   const visibleMetrics = dataset.metrics.filter(({ id }) => visibleIds.has(id));
-  const aggregateRecords = { municipalities: visibleMunicipalities, metrics: visibleMetrics };
+  const aggregateRecords = {
+    municipalities: noiseOnly
+      ? visibleMunicipalities.filter((municipality) => {
+          const metric = visibleMetrics.find(({ id }) => id === municipality.id);
+          return metric?.trafficNoiseLdenDb !== undefined;
+        })
+      : visibleMunicipalities,
+    metrics: noiseOnly
+      ? visibleMetrics.filter((metric) => metric.trafficNoiseLdenDb !== undefined)
+      : visibleMetrics,
+  };
   const maximumMapCells = input.data.zoom <= 10 ? 5000 : input.data.zoom <= 12 ? 5000 : 6000;
   const candidateStride = Math.max(
     1,
