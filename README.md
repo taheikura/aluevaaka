@@ -5,7 +5,7 @@
 
 Finnish municipality recommendation platform. Enter your preferences for housing, healthcare, transport, nature, and economic outlook — get ranked municipalities with explainable scores, category breakdowns, and a map view.
 
-**Live demo:** _link added after first deployment_
+**Live demo:** [Aluevaaka dev](https://d2gp8tth9cdg09.cloudfront.net)
 
 ---
 
