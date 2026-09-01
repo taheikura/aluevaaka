@@ -18,20 +18,41 @@ function requestError(response: Response, url: string): HttpError {
   return new HttpError(response.status, url, response.headers.get('retry-after') ?? undefined);
 }
 
-export async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw requestError(res, url);
+function retryDelayMilliseconds(retryAfter: string | undefined, attempt: number): number {
+  if (retryAfter !== undefined) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds)) return Math.min(seconds * 1000, 15 * 60 * 1000);
+    const date = Date.parse(retryAfter);
+    if (Number.isFinite(date)) return Math.max(0, Math.min(date - Date.now(), 15 * 60 * 1000));
   }
-  return res.text();
+  return Math.min(1000 * 2 ** attempt, 30 * 1000);
+}
+
+function isRetryable(status: number): boolean {
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
+async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch(url, init);
+    if (response.ok) return response;
+    if (!isRetryable(response.status) || attempt === 3) throw requestError(response, url);
+    await new Promise((resolve) =>
+      setTimeout(
+        resolve,
+        retryDelayMilliseconds(response.headers.get('retry-after') ?? undefined, attempt),
+      ),
+    );
+  }
+  throw new Error(`HTTP request failed after retries: ${url}`);
+}
+
+export async function fetchText(url: string): Promise<string> {
+  return (await fetchWithRetry(url)).text();
 }
 
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  if (!res.ok) {
-    throw requestError(res, url);
-  }
-  return res.json() as Promise<T>;
+  return (await fetchWithRetry(url, init)).json() as Promise<T>;
 }
 
 /** Parse a CSV string into an array of objects keyed by header row. */
