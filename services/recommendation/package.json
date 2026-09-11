@@ -33,6 +33,6 @@
     "archiver": "^8.0.0",
     "esbuild": "^0.28.1",
     "typescript": "*",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   }
 }
