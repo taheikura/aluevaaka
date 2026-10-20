@@ -3,7 +3,7 @@ name: Data pipeline
 on:
   # Run monthly to refresh the raw OSM snapshot and rebuild the dataset.
   schedule:
-    - cron: "0 3 1 * *"  # First day of each month, 03:00 UTC
+    - cron: "0 3 5 * *"  # First day of each month, 03:00 UTC
 
   # Trigger manually when source data is known to have updated
   workflow_dispatch:
