@@ -1,0 +1,246 @@
+{
+  "main": {
+    "id": "b2377781ed2cccc9",
+    "type": "split",
+    "children": [
+      {
+        "id": "ac1c6ef18f6649a1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "59118795195f9621",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "raw/clippings/Helsinki Region Travel Time Matrix 2023  Digital Geography Lab.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Helsinki Region Travel Time Matrix 2023  Digital Geography Lab"
+            }
+          },
+          {
+            "id": "71a78bc0e0454a8b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/concepts/Explainable Recommendation.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Explainable Recommendation"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "fcd6b9c5961147c4",
+    "type": "split",
+    "children": [
+      {
+        "id": "ece9f01f3da5ca4a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1d6d136c3802759b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Tiedostot"
+            }
+          },
+          {
+            "id": "6c208a74aa2a7dca",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Etsi"
+            }
+          },
+          {
+            "id": "11753bdcea742d0b",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Kirjanmerkit"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "b97a63b2b4c32392",
+    "type": "split",
+    "children": [
+      {
+        "id": "281e92e5787fb0d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cfd25f2ef92aa9db",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "wiki/concepts/Explainable Recommendation.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Paluulinkit"
+            }
+          },
+          {
+            "id": "1a7465672f972ff8",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "wiki/concepts/Explainable Recommendation.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Lähtevät linkit"
+            }
+          },
+          {
+            "id": "7f667b57c9c06a32",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tunnisteet"
+            }
+          },
+          {
+            "id": "12e55545f4fbb173",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Kaikki määreet"
+            }
+          },
+          {
+            "id": "2f094581353b05bd",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "wiki/concepts/Explainable Recommendation.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sisällysluettelo"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Avaa pikavaihdin": false,
+      "graph:Avaa verkkonäkymä": false,
+      "canvas:Luo uusi valkotaulu": false,
+      "daily-notes:Avaa tämän päivän muistiinpanot": false,
+      "templates:Lisää malline": false,
+      "command-palette:Avaa komentovalikko": false,
+      "bases:Luo uusi kanta": false,
+      "templater-obsidian:Templater": false
+    }
+  },
+  "active": "71a78bc0e0454a8b",
+  "lastOpenFiles": [
+    "templates/concept-page.md",
+    "raw/clippings/Helsinki Region Travel Time Matrix 2023  Digital Geography Lab.md",
+    "wiki/entities/R5.md",
+    "wiki/entities/r5py.md",
+    "wiki/entities/YKR Grid.md",
+    "wiki/entities/Digital Geography Lab.md",
+    "wiki/concepts/Travel-Time Accessibility.md",
+    "wiki/sources/Helsinki Region Travel Time Matrix 2023 — Digital Geography Lab.md",
+    "raw/DESIGN.md",
+    "clippings/Helsinki Region Travel Time Matrix 2023  Digital Geography Lab.md",
+    "clippings",
+    "README.md",
+    "Clippings/Helsinki Region Travel Time Matrix 2023  Digital Geography Lab.md",
+    "Clippings",
+    "wiki/sources/Aluevaaka Design Document.md",
+    "wiki/concepts/Serverless AWS Architecture.md",
+    "wiki/concepts/Explainable Recommendation.md",
+    "wiki/concepts/Deterministic Weighted Scoring.md",
+    "wiki/entities/AWS Lambda.md",
+    "wiki/concepts/Data Provenance and Quality.md",
+    "wiki/entities/Amazon S3.md",
+    "wiki/entities/Amazon CloudFront.md",
+    "wiki/entities/Aluevaaka.md",
+    "wiki/manifest.md",
+    "wiki/sources",
+    "wiki/log.md",
+    "wiki/index.md",
+    "wiki/concepts",
+    "wiki/entities",
+    "wiki/analyses",
+    "wiki",
+    "templates/source-summary.md",
+    "templates/entity-page.md",
+    "templates",
+    "raw/transcripts",
+    "raw/clippings"
+  ]
+}

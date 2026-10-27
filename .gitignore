@@ -60,3 +60,5 @@ pnpm-debug.log*
 
 # python venv
 .venv/
+
+.qmd-home/\n.DS_Store\n
